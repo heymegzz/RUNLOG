@@ -58,13 +58,53 @@
 }
 
 .app-layout .user-menu {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
   border-radius: var(--radius);
   border: 1px solid transparent;
+  padding: 0.35rem;
 }
 
 .app-layout .user-menu:hover {
   border-color: var(--border);
   background: var(--bg-hover);
+}
+
+.app-layout .user-menu-profile {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex: 1;
+  min-width: 0;
+  padding: 0.25rem 0.35rem;
+  border-radius: var(--radius-sm);
+  color: inherit;
+  text-decoration: none;
+}
+
+.app-layout .user-menu-profile:hover {
+  background: var(--bg-elevated);
+}
+
+.app-layout .user-logout-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.app-layout .user-logout-btn:hover {
+  color: var(--error);
+  background: rgba(255, 69, 69, 0.08);
 }
 
 .app-layout .user-role {
@@ -391,11 +431,26 @@
 }
 
 .live-feed-empty {
-  padding: 2.5rem 1rem;
+  padding: 2.5rem 1.25rem;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.live-feed-empty-title {
+  margin: 0 0 0.35rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.live-feed-empty-hint {
+  margin: 0;
+  max-width: 280px;
   font-size: 0.8125rem;
-  color: var(--text-muted);
-  font-family: var(--font-mono);
+  line-height: 1.5;
+  color: var(--text-secondary);
 }
 
 .app-layout table a {

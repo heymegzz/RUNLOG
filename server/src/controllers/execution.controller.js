@@ -17,7 +17,7 @@ export const listExecutions = async (req, res, next) => {
       .sort({ executedAt: -1 })
       .limit(limit)
       .skip(skip)
-      .populate('job', 'name url method'); // Populate job details lightly
+      .populate('job', 'name callbackUrl callbackMethod'); // Populate job details lightly
 
     const total = await Execution.countDocuments(query);
 
@@ -30,7 +30,7 @@ export const listExecutions = async (req, res, next) => {
 export const getExecution = async (req, res, next) => {
   try {
     const execution = await Execution.findOne({ _id: req.params.id, workspace: req.workspace._id })
-      .populate('job', 'name url method headers payload schedule');
+      .populate('job', 'name callbackUrl callbackMethod callbackHeaders callbackBody schedule');
 
     if (!execution) return error(res, 'NOT_FOUND', 'Execution log not found', 404);
     

@@ -9,12 +9,19 @@ export const generateAccessToken = (userId) => {
   });
 };
 
+const refreshSecret = () =>
+  process.env.REFRESH_TOKEN_SECRET || process.env.JWT_SECRET;
+
 export const generateRefreshToken = (userId) => {
-  return jwt.sign({ userId }, process.env.REFRESH_TOKEN_SECRET, {
+  const secret = refreshSecret();
+  if (!secret) {
+    throw new Error('REFRESH_TOKEN_SECRET or JWT_SECRET must be set');
+  }
+  return jwt.sign({ userId }, secret, {
     expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || '7d',
   });
 };
 
 export const verifyRefreshToken = (token) => {
-  return jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
+  return jwt.verify(token, refreshSecret());
 };

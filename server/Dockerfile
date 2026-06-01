@@ -1,19 +1,9 @@
-FROM node:20-alpine
+FROM node:20.19-alpine
 
-# Set working directory
 WORKDIR /app
-
-# Copy package files
 COPY package*.json ./
+RUN npm ci --omit=dev
 
-# Install dependencies
-RUN npm install
-
-# Copy server source code
 COPY . .
-
-# Expose API port
 EXPOSE 5005
-
-# Start the server
 CMD ["npm", "start"]

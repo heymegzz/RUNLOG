@@ -1,13 +1,28 @@
 import Job from '../models/Job.js';
 import Execution from '../models/Execution.js';
 import { success, error } from '../utils/apiResponse.js';
-import cronParser from 'cron-parser';
+import { parseCron } from '../utils/cronParse.js';
 import jobQueue from '../queues/jobQueue.js';
 
 export const listJobs = async (req, res, next) => {
   try {
-    const jobs = await Job.find({ workspace: req.workspace._id }).sort({ createdAt: -1 });
-    return success(res, jobs);
+    const { search, page: pageParam, limit: limitParam } = req.query;
+    const page = Math.max(1, parseInt(pageParam, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(limitParam, 10) || 20));
+    const skip = (page - 1) * limit;
+
+    const filter = { workspace: req.workspace._id };
+
+    if (search) {
+      filter.name = { $regex: search, $options: 'i' };
+    }
+
+    const [jobs, total] = await Promise.all([
+      Job.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Job.countDocuments(filter),
+    ]);
+
+    return success(res, { jobs, total, page, limit });
   } catch (err) {
     next(err);
   }
@@ -34,7 +49,7 @@ export const createJob = async (req, res, next) => {
 
     let nextRunAt;
     try {
-      const interval = cronParser.parseExpression(schedule);
+      const interval = parseCron(schedule);
       nextRunAt = interval.next().toDate();
     } catch (err) {
       return error(res, 'VALIDATION_ERROR', 'Invalid cron expression');
@@ -79,7 +94,7 @@ export const updateJob = async (req, res, next) => {
 
     if (schedule && schedule !== job.schedule) {
       try {
-        const interval = cronParser.parseExpression(schedule);
+        const interval = parseCron(schedule);
         job.nextRunAt = interval.next().toDate();
         job.schedule = schedule;
       } catch (err) {
@@ -127,7 +142,7 @@ export const resumeJob = async (req, res, next) => {
     if (!job) return error(res, 'NOT_FOUND', 'Job not found', 404);
 
     job.status = 'active';
-    const interval = cronParser.parseExpression(job.schedule);
+    const interval = parseCron(job.schedule);
     job.nextRunAt = interval.next().toDate();
     
     await job.save();

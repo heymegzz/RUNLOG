@@ -1,6 +1,11 @@
 node_modules/
 .env
+.env.local
 .DS_Store
 dist/
 build/
 *.log
+job_log.txt
+jobs.json
+runs.json
+scratch/

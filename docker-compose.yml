@@ -2,24 +2,22 @@ version: '3.8'
 
 services:
   mongodb:
-    image: mongo:latest
+    image: mongo:7
     container_name: runlog-mongo
-    ports:
-      - "27017:27017"
     volumes:
       - mongo-data:/data/db
     networks:
       - runlog-net
+    restart: unless-stopped
 
   redis:
-    image: redis:alpine
+    image: redis:7-alpine
     container_name: runlog-redis
-    ports:
-      - "6379:6379"
     volumes:
       - redis-data:/data
     networks:
       - runlog-net
+    restart: unless-stopped
 
   server:
     build:
@@ -27,33 +25,36 @@ services:
       dockerfile: Dockerfile
     container_name: runlog-server
     ports:
-      - "5005:5005"
+      - '5005:5005'
     environment:
-      - PORT=5005
-      - MONGODB_URI=mongodb://mongodb:27017/runlog
-      - REDIS_URL=redis://redis:6379
-      - JWT_SECRET=super_secret_runlog_key_in_production
-      # - EMAIL_HOST=smtp.gmail.com
-      # - EMAIL_PORT=587
-      # - EMAIL_USER=your_email@gmail.com
-      # - EMAIL_PASS=your_app_password
+      PORT: 5005
+      NODE_ENV: production
+      MONGODB_URI: mongodb://mongodb:27017/runlog
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET:-${JWT_SECRET}}
+      CLIENT_URL: ${CLIENT_URL:-http://localhost:8080}
     depends_on:
       - mongodb
       - redis
     networks:
       - runlog-net
+    restart: unless-stopped
 
   client:
     build:
       context: ./client
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: /api
     container_name: runlog-client
     ports:
-      - "8080:80"
+      - '8080:80'
     depends_on:
       - server
     networks:
       - runlog-net
+    restart: unless-stopped
 
 volumes:
   mongo-data:

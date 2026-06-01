@@ -7,7 +7,7 @@ const Register = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { register, isAuthenticated, isLoading, error } = useAuthStore();
+  const { register, login, isAuthenticated, isLoading, error } = useAuthStore();
   const navigate = useNavigate();
 
   if (isAuthenticated) {
@@ -20,6 +20,11 @@ const Register = () => {
     if (success) {
       navigate('/dashboard');
     }
+  };
+
+  const handleDemoLogin = async () => {
+    const success = await login({ email: 'demo@runlog.dev', password: 'demo123' });
+    if (success) navigate('/dashboard');
   };
 
   return (
@@ -77,6 +82,16 @@ const Register = () => {
           </button>
         </div>
       </form>
+
+      <div className="auth-or">or</div>
+      <button
+        type="button"
+        className="auth-btn auth-btn-ghost"
+        onClick={handleDemoLogin}
+        disabled={isLoading}
+      >
+        Continue with demo account
+      </button>
 
       <p className="auth-switch">
         Already have an account? <Link to="/login">Sign in</Link>

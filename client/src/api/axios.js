@@ -1,5 +1,14 @@
 import axios from 'axios';
 
+const isAuthRoute = (url = '') => {
+  const path = String(url);
+  return (
+    path.includes('/auth/login') ||
+    path.includes('/auth/register') ||
+    path.includes('/auth/refresh')
+  );
+};
+
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
   headers: {
@@ -25,16 +34,86 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Add a response interceptor to handle 401s (token expiry)
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
 api.interceptors.response.use(
-  (response) => response.data, // Simplify accessing the response payload
-  (error) => {
-    if (error.response?.status === 401) {
+  (response) => response.data,
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 404 && error.response?.data?.error?.code === 'WORKSPACE_NOT_FOUND') {
       localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
       localStorage.removeItem('activeWorkspace');
-      window.location.href = '/login'; // force redirect
+      window.location.href = '/login';
+      return Promise.reject(error.response?.data || error);
     }
+
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !isAuthRoute(originalRequest?.url)
+    ) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        }).then(token => {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return api(originalRequest);
+        }).catch(err => Promise.reject(err));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (!refreshToken) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('activeWorkspace');
+        window.location.href = '/login';
+        return Promise.reject(error.response?.data || error);
+      }
+
+      try {
+        const baseURL = import.meta.env.VITE_API_URL || '/api';
+        const { data } = await axios.post(`${baseURL}/auth/refresh`, { refreshToken });
+        const newToken = data.data.accessToken;
+        localStorage.setItem('token', newToken);
+        if (data.data.refreshToken) {
+          localStorage.setItem('refreshToken', data.data.refreshToken);
+        }
+        api.defaults.headers.common.Authorization = `Bearer ${newToken}`;
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        
+        processQueue(null, newToken);
+        return api(originalRequest);
+      } catch (err) {
+        processQueue(err, null);
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+        localStorage.removeItem('activeWorkspace');
+        window.location.href = '/login';
+        return Promise.reject(err.response?.data || err);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
     return Promise.reject(error.response?.data || error);
   }
 );

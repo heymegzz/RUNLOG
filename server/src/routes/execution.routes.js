@@ -8,7 +8,7 @@ const router = Router();
 
 // Require auth and workspace context for all execution routes
 // Also require at least developer role (viewers might not need access depending on requirements)
-router.use(authenticate, requireWorkspace, requireRole(['admin', 'owner', 'developer', 'viewer']));
+router.use(authenticate, requireWorkspace, requireRole(['admin', 'owner', 'developer']));
 
 router.get('/', listExecutions);
 router.get('/:id', getExecution);

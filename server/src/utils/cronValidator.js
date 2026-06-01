@@ -1,4 +1,4 @@
-import { CronExpressionParser } from 'cron-parser';
+import { parseCron } from './cronParse.js';
 
 /**
  * Validates a cron expression string.
@@ -6,7 +6,7 @@ import { CronExpressionParser } from 'cron-parser';
  */
 export const validateCron = (expression) => {
   try {
-    CronExpressionParser.parse(expression);
+    parseCron(expression);
     return { valid: true };
   } catch (err) {
     return { valid: false, message: err.message };

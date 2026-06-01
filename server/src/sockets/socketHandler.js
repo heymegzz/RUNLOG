@@ -1,4 +1,6 @@
 import { Server } from 'socket.io';
+import jwt from 'jsonwebtoken';
+import WorkspaceMember from '../models/WorkspaceMember.js';
 
 let io;
 
@@ -11,12 +13,34 @@ export const initSocketIO = (httpServer) => {
     },
   });
 
-  io.on('connection', (socket) => {
-    console.log(`🔌 Socket connected: ${socket.id}`);
+  io.use((socket, next) => {
+    const token = socket.handshake.auth?.token;
+    if (!token) return next(new Error('Authentication error'));
 
-    socket.on('join:workspace', (workspaceId) => {
-      socket.join(`workspace:${workspaceId}`);
-      console.log(`📡 Socket ${socket.id} joined workspace:${workspaceId}`);
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      socket.userId = decoded.userId;
+      next();
+    } catch (err) {
+      next(new Error('Authentication error'));
+    }
+  });
+
+  io.on('connection', (socket) => {
+    console.log(`🔌 Socket connected: ${socket.id} for user ${socket.userId}`);
+
+    socket.on('join:workspace', async (workspaceId) => {
+      try {
+        const isMember = await WorkspaceMember.exists({ user: socket.userId, workspace: workspaceId });
+        if (isMember) {
+          socket.join(`workspace:${workspaceId}`);
+          console.log(`📡 Socket ${socket.id} joined workspace:${workspaceId}`);
+        } else {
+          socket.emit('error', 'Not a member of this workspace');
+        }
+      } catch (err) {
+        console.error('Socket join workspace error:', err);
+      }
     });
 
     socket.on('leave:workspace', (workspaceId) => {

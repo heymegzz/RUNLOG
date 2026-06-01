@@ -133,7 +133,16 @@ const Dashboard = () => {
               </div>
               <div className="live-feed execution-log">
                 {liveExecutions.length === 0 ? (
-                  <div className="live-feed-empty">Waiting for executions…</div>
+                  <div className="live-feed-empty">
+                    <IconRadio size={28} style={{ color: 'var(--accent)', marginBottom: '0.75rem', opacity: 0.9 }} />
+                    <p className="live-feed-empty-title">No runs yet</p>
+                    <p className="live-feed-empty-hint">
+                      Trigger a job manually or wait for the next scheduled run — results appear here instantly.
+                    </p>
+                    <Link to="/jobs" className="btn btn-secondary btn-sm" style={{ marginTop: '1rem' }}>
+                      View jobs
+                    </Link>
+                  </div>
                 ) : (
                   liveExecutions.map((exec, idx) => (
                     <div key={idx} className="log-entry">

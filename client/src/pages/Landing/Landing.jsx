@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../../store/authStore';
 import Logo from '../../components/Brand/Logo';
 import './landing.css';
 
@@ -905,6 +906,14 @@ function FinalCTA() {
 }
 
 export default function Landing() {
+  const navigate = useNavigate();
+  const { login } = useAuthStore();
+  const handleDemoLogin = async (e) => {
+    e.preventDefault();
+    const success = await login({ email: 'demo@runlog.dev', password: 'demo123' });
+    if (success) navigate('/dashboard');
+  };
+
   const [runs, runsRef] = useRafCountUp(1204, { startOnMount: true });
   const [success, successRef] = useRafCountUp(98.2, { startOnMount: true, decimals: 1 });
   const [dur, durRef] = useRafCountUp(143, { startOnMount: true });
@@ -947,7 +956,7 @@ export default function Landing() {
             </p>
             <div className="hero-actions">
               <Link to="/register" className="btn-primary">Get started</Link>
-              <a href="#how" className="btn-secondary">See how it works</a>
+              <button type="button" onClick={handleDemoLogin} className="btn-secondary" style={{ cursor: 'pointer' }}>Try demo</button>
             </div>
           </div>
           <div ref={heroPanelRef} className="hero-panel reveal-hidden reveal-delay-1">

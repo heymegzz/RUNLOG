@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import * as jobsApi from '../../api/jobs.api';
 import JobCard from '../../components/JobCard/JobCard';
+import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
 import { useToast } from '../../hooks/useToast';
 import EmptyState from '../../components/EmptyState/EmptyState';
 import { IconJobs, IconPlus } from '../../components/Icons/Icons';
@@ -12,10 +13,11 @@ const JobList = () => {
   const limit = parseInt(searchParams.get('limit') || '20', 10);
 
   const [jobs, setJobs] = useState([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  // const [total, setTotal] = useState(0); // If backend pagination is fully supported
+  const [deleteTarget, setDeleteTarget] = useState(null);
   
   const { showToast } = useToast();
 
@@ -23,13 +25,15 @@ const JobList = () => {
     setLoading(true);
     setError(null);
     try {
-      // Backend listJobs currently returns all workspace jobs in an array, unpaginated.
-      // We apply manual client-side limit for now, or update backend later.
-      // But we pass the query params just in case backend supports it:
-      const data = await jobsApi.listJobs({ page, limit });
-      // Depending on API shape, it could be data.data.jobs or just data.data
-      const resultJobs = Array.isArray(data.data) ? data.data : data.data.jobs || [];
-      setJobs(resultJobs);
+      const data = await jobsApi.listJobs({ page, limit, search: searchTerm });
+      const payload = data.data;
+      if (Array.isArray(payload)) {
+        setJobs(payload);
+        setTotal(payload.length);
+      } else {
+        setJobs(payload?.jobs || []);
+        setTotal(payload?.total ?? 0);
+      }
     } catch (err) {
       setError(err.message || 'Failed to fetch jobs');
     } finally {
@@ -38,8 +42,11 @@ const JobList = () => {
   };
 
   useEffect(() => {
-    fetchJobs();
-  }, [page, limit]);
+    const delayDebounceFn = setTimeout(() => {
+      fetchJobs();
+    }, 300);
+    return () => clearTimeout(delayDebounceFn);
+  }, [page, limit, searchTerm]);
 
   const handleToggleStatus = async (id) => {
     try {
@@ -57,24 +64,21 @@ const JobList = () => {
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
     try {
-      await jobsApi.deleteJob(id);
-      setJobs(jobs.filter(j => j._id !== id));
+      await jobsApi.deleteJob(deleteTarget);
+      setJobs((prev) => prev.filter((j) => j._id !== deleteTarget));
+      setTotal((t) => Math.max(0, t - 1));
       showToast({ message: 'Job deleted', type: 'success' });
     } catch (err) {
       showToast({ message: 'Failed to delete job: ' + err.message, type: 'error' });
+    } finally {
+      setDeleteTarget(null);
     }
   };
 
-  const filteredJobs = jobs.filter(job => 
-    job.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    job.callbackUrl.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Client-side slice for UI pagination since listJobs is unpaginated on server
-  const paginatedJobs = filteredJobs.slice((page - 1) * limit, page * limit);
-  const totalPages = Math.ceil(filteredJobs.length / limit);
+  const totalPages = Math.max(1, Math.ceil(total / limit));
 
   return (
     <div>
@@ -116,7 +120,7 @@ const JobList = () => {
         <div className="flex-center" style={{ padding: '4rem' }}>
           <div className="spinner"></div>
         </div>
-      ) : filteredJobs.length === 0 ? (
+      ) : jobs.length === 0 ? (
         <EmptyState
           icon={IconJobs}
           title="No jobs found"
@@ -132,12 +136,12 @@ const JobList = () => {
       ) : (
         <>
           <div className="jobs-grid">
-            {paginatedJobs.map(job => (
-              <JobCard 
-                key={job._id} 
-                job={job} 
+            {jobs.map((job) => (
+              <JobCard
+                key={job._id}
+                job={job}
                 onToggleStatus={handleToggleStatus}
-                onDelete={handleDelete}
+                onDelete={setDeleteTarget}
               />
             ))}
           </div>
@@ -167,6 +171,15 @@ const JobList = () => {
           )}
         </>
       )}
+
+      <ConfirmModal
+        open={!!deleteTarget}
+        title="Delete job"
+        message="Are you sure you want to delete this job? This action cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 };

@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import cronParser from 'cron-parser';
-import Job from './src/models/Job.js';
+import { parseCron } from '../src/utils/cronParse.js';
+import Job from '../src/models/Job.js';
 
 dotenv.config();
 
@@ -12,15 +12,17 @@ const update = async () => {
   for (const job of jobs) {
     if (!job.nextRunAt) {
       try {
-        const interval = cronParser.parseExpression(job.schedule);
-        // Set it to run exactly now to trigger it immediately, then let cronScanner handle subsequent runs!
+        parseCron(job.schedule);
         job.nextRunAt = new Date();
         await job.save();
         count++;
-      } catch(e) {}
+      } catch {
+        // skip invalid schedules
+      }
     }
   }
   console.log(`Updated ${count} jobs to start firing immediately!`);
   process.exit(0);
 };
+
 update();

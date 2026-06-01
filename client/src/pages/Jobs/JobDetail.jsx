@@ -1,19 +1,21 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import * as jobsApi from '../../api/jobs.api';
 import * as execApi from '../../api/executions.api';
 import { useSocket } from '../../hooks/useSocket';
+import { useToast } from '../../hooks/useToast';
 import { relativeTime } from '../../utils/time';
 
 const JobDetail = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
   const { liveExecutions } = useSocket();
-  
+  const { showToast } = useToast();
+
   const [job, setJob] = useState(null);
   const [executions, setExecutions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [triggering, setTriggering] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -62,12 +64,20 @@ const JobDetail = () => {
     }
   }, [liveExecutions, id, job]);
 
+  useEffect(() => {
+    if (!triggering) return;
+    const match = liveExecutions.find((ex) => ex.jobId === id);
+    if (match) setTriggering(false);
+  }, [liveExecutions, id, triggering]);
+
   const handleTrigger = async () => {
+    setTriggering(true);
     try {
       await jobsApi.triggerJob(id);
-      alert('Job triggered successfully. Waiting for execution...');
+      showToast({ message: 'Job triggered — waiting for execution…', type: 'success' });
     } catch (err) {
-      alert('Trigger failed: ' + err.message);
+      setTriggering(false);
+      showToast({ message: 'Trigger failed: ' + (err.message || err), type: 'error' });
     }
   };
 
@@ -86,9 +96,18 @@ const JobDetail = () => {
           <p className="page-subtitle">{job.description || 'No description provided'}</p>
         </div>
         <div className="flex gap-sm">
-          <button className="btn btn-secondary" onClick={handleTrigger}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-            Trigger Now
+          <button className="btn btn-secondary" onClick={handleTrigger} disabled={triggering}>
+            {triggering ? (
+              <>
+                <span className="spinner" style={{ width: 14, height: 14, marginRight: 6 }} />
+                Running…
+              </>
+            ) : (
+              <>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                Trigger Now
+              </>
+            )}
           </button>
           <Link to={`/jobs/${id}/edit`} className="btn btn-secondary">Edit</Link>
         </div>

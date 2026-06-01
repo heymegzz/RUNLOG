@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../../api/axios';
 import { useToast } from '../../hooks/useToast';
+import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
 import EmptyState from '../../components/EmptyState/EmptyState';
 import { IconKey, IconPlus } from '../../components/Icons/Icons';
 
@@ -13,6 +14,7 @@ const ApiKeys = () => {
   const [newKeyName, setNewKeyName] = useState('');
   const [newKeyExpiry, setNewKeyExpiry] = useState('');
   const [createdKey, setCreatedKey] = useState(null);
+  const [revokeTarget, setRevokeTarget] = useState(null);
 
   const { showToast } = useToast();
 
@@ -49,15 +51,16 @@ const ApiKeys = () => {
     }
   };
 
-  const handleRevoke = async (id) => {
-    if (!window.confirm('Are you sure you want to revoke this API key? Any applications using it will lose access immediately.')) return;
-    
+  const handleRevokeConfirm = async () => {
+    if (!revokeTarget) return;
     try {
-      await api.delete(`/api-keys/${id}`);
-      setKeys(keys.filter(k => k._id !== id));
+      await api.delete(`/api-keys/${revokeTarget}`);
+      setKeys((prev) => prev.filter((k) => k._id !== revokeTarget));
       showToast({ message: 'API key revoked', type: 'success' });
     } catch (err) {
       showToast({ message: 'Failed to revoke key: ' + err.message, type: 'error' });
+    } finally {
+      setRevokeTarget(null);
     }
   };
 
@@ -112,7 +115,7 @@ const ApiKeys = () => {
                       {k.expiresAt ? new Date(k.expiresAt).toLocaleDateString() : 'Never'}
                     </td>
                     <td>
-                      <button className="btn btn-ghost btn-sm text-error" onClick={() => handleRevoke(k._id)}>
+                      <button type="button" className="btn btn-ghost btn-sm text-error" onClick={() => setRevokeTarget(k._id)}>
                         Revoke
                       </button>
                     </td>
@@ -189,6 +192,15 @@ const ApiKeys = () => {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        open={!!revokeTarget}
+        title="Revoke API key"
+        message="Are you sure you want to revoke this API key? Any applications using it will lose access immediately."
+        confirmLabel="Revoke"
+        onConfirm={handleRevokeConfirm}
+        onCancel={() => setRevokeTarget(null)}
+      />
     </div>
   );
 };

@@ -67,15 +67,17 @@ const Layout = () => {
         </nav>
 
         <div className="sidebar-footer">
-          <div className="user-menu" onClick={logout} title="Click to logout">
-            <div className="user-avatar">{initials}</div>
-            <div className="user-info">
-              <div className="user-name">{user?.name || 'User'}</div>
-              <div className="user-role">
-                <IconLogOut size={12} />
-                Sign out
+          <div className="user-menu">
+            <NavLink to="/settings/team" className="user-menu-profile">
+              <div className="user-avatar">{initials}</div>
+              <div className="user-info">
+                <div className="user-name">{user?.name || 'User'}</div>
+                <div className="user-role text-muted">Team settings</div>
               </div>
-            </div>
+            </NavLink>
+            <button type="button" className="user-logout-btn" onClick={logout} title="Sign out">
+              <IconLogOut size={16} />
+            </button>
           </div>
         </div>
       </aside>

@@ -1,27 +1,34 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 import { useAuthStore } from '../store/authStore';
 
 export const useSocket = () => {
-  const { user, token } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
+  const token = useAuthStore((s) => s.token);
+  const workspaceId = user?.activeWorkspace;
   const [socket, setSocket] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [liveExecutions, setLiveExecutions] = useState([]);
+  const socketRef = useRef(null);
 
   useEffect(() => {
-    if (!user?.activeWorkspace || !token) return;
+    if (!workspaceId || !token) return;
 
-    const socketUrl = import.meta.env.VITE_API_URL 
-      ? import.meta.env.VITE_API_URL.replace('/api', '')
-      : 'http://localhost:5005';
+    const apiUrl = import.meta.env.VITE_API_URL;
+    const socketUrl = apiUrl?.startsWith('http')
+      ? apiUrl.replace(/\/api\/?$/, '')
+      : typeof window !== 'undefined'
+        ? window.location.origin
+        : 'http://localhost:5005';
 
     const newSocket = io(socketUrl, {
       auth: { token },
       withCredentials: true,
     });
+    socketRef.current = newSocket;
 
     newSocket.on('connect', () => {
-      newSocket.emit('join:workspace', user.activeWorkspace);
+      newSocket.emit('join:workspace', workspaceId);
     });
 
     newSocket.on('execution:done', (payload) => {
@@ -46,10 +53,11 @@ export const useSocket = () => {
     setSocket(newSocket);
 
     return () => {
-      newSocket.emit('leave:workspace', user.activeWorkspace);
+      newSocket.emit('leave:workspace', workspaceId);
       newSocket.disconnect();
+      socketRef.current = null;
     };
-  }, [user?.activeWorkspace, token]);
+  }, [workspaceId, token]);
 
   const clearNotifications = () => setNotifications([]);
 

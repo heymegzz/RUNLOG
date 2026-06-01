@@ -5,7 +5,7 @@ import Workspace from '../models/Workspace.js';
  * Must run AFTER authenticate middleware.
  */
 const requireWorkspace = async (req, res, next) => {
-  const workspaceId = req.headers['x-workspace-id'];
+  const workspaceId = req.headers['x-workspace-id'] || req.params.id;
 
   if (!workspaceId) {
     return res.status(400).json({

@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import cronParser from 'cron-parser';
+import { parseCron } from '../utils/cronParse.js';
 import Job from '../models/Job.js';
 import jobQueue from '../queues/jobQueue.js';
 
@@ -37,7 +37,7 @@ const startCronScanner = () => {
           );
 
           // Calculate next run
-          const interval = cronParser.parseExpression(job.schedule);
+          const interval = parseCron(job.schedule);
           job.nextRunAt = interval.next().toDate();
           await job.save();
         } catch (jobErr) {

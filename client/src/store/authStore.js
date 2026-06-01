@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { authApi } from '../api/auth.api';
+import { getApiErrorMessage } from '../api/apiError';
 
 export const useAuthStore = create((set) => ({
   user: JSON.parse(localStorage.getItem('user')) || null,
@@ -8,13 +9,24 @@ export const useAuthStore = create((set) => ({
   isLoading: false,
   error: null,
 
+  setUser: (user) => {
+    if (user) {
+      localStorage.setItem('user', JSON.stringify(user));
+      if (user.activeWorkspace) {
+        localStorage.setItem('activeWorkspace', user.activeWorkspace);
+      }
+    }
+    set({ user });
+  },
+
   login: async (credentials) => {
     set({ isLoading: true, error: null });
     try {
       const response = await authApi.login(credentials);
-      const { user, accessToken } = response.data;
-      
+      const { user, accessToken, refreshToken } = response.data;
+
       localStorage.setItem('token', accessToken);
+      if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('activeWorkspace', user.activeWorkspace);
 
@@ -26,7 +38,7 @@ export const useAuthStore = create((set) => ({
       });
       return true;
     } catch (error) {
-      set({ error: error.message || 'Login failed', isLoading: false });
+      set({ error: getApiErrorMessage(error, 'Login failed'), isLoading: false });
       return false;
     }
   },
@@ -35,9 +47,10 @@ export const useAuthStore = create((set) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await authApi.register(data);
-      const { user, accessToken } = response.data;
-      
+      const { user, accessToken, refreshToken } = response.data;
+
       localStorage.setItem('token', accessToken);
+      if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('activeWorkspace', user.activeWorkspace);
 
@@ -49,7 +62,7 @@ export const useAuthStore = create((set) => ({
       });
       return true;
     } catch (error) {
-      set({ error: error.message || 'Registration failed', isLoading: false });
+      set({ error: getApiErrorMessage(error, 'Registration failed'), isLoading: false });
       return false;
     }
   },
@@ -61,6 +74,7 @@ export const useAuthStore = create((set) => ({
       console.error('Logout error', error);
     } finally {
       localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
       localStorage.removeItem('activeWorkspace');
       set({ user: null, token: null, isAuthenticated: false });
