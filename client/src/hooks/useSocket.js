@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 import { useAuthStore } from '../store/authStore';
+import { getSocketOrigin } from '../config/api.js';
 
 export const useSocket = () => {
   const user = useAuthStore((s) => s.user);
@@ -14,14 +15,7 @@ export const useSocket = () => {
   useEffect(() => {
     if (!workspaceId || !token) return;
 
-    const apiUrl = import.meta.env.VITE_API_URL;
-    const socketUrl = apiUrl?.startsWith('http')
-      ? apiUrl.replace(/\/api\/?$/, '')
-      : typeof window !== 'undefined'
-        ? window.location.origin
-        : 'http://localhost:5005';
-
-    const newSocket = io(socketUrl, {
+    const newSocket = io(getSocketOrigin(), {
       auth: { token },
       withCredentials: true,
     });

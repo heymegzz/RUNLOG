@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getApiBaseUrl } from '../config/api.js';
 
 const isAuthRoute = (url = '') => {
   const path = String(url);
@@ -10,7 +11,7 @@ const isAuthRoute = (url = '') => {
 };
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: getApiBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },
@@ -89,7 +90,7 @@ api.interceptors.response.use(
       }
 
       try {
-        const baseURL = import.meta.env.VITE_API_URL || '/api';
+        const baseURL = getApiBaseUrl();
         const { data } = await axios.post(`${baseURL}/auth/refresh`, { refreshToken });
         const newToken = data.data.accessToken;
         localStorage.setItem('token', newToken);
