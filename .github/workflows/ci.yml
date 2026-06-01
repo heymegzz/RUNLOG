@@ -9,17 +9,6 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
-
-    services:
-      mongodb:
-        image: mongo:7
-        ports:
-          - 27017:27017
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-
     steps:
       - uses: actions/checkout@v4
 
@@ -27,15 +16,14 @@ jobs:
         with:
           node-version: '20.19.0'
 
-      - name: Install & verify server
+      - name: Install server dependencies
         working-directory: server
         run: npm ci
 
       - name: Install & build client
         working-directory: client
+        env:
+          VITE_API_URL: https://runlog-1.onrender.com/api
         run: |
           npm install --no-audit --no-fund
           npm run build
-        env:
-          NODE_ENV: production
-          VITE_API_URL: https://runlog-1.onrender.com/api

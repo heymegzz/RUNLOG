@@ -149,7 +149,6 @@ node scripts/updateDemoJobs.js # force missing nextRunAt for active jobs
 RUNLOG/
 ├── client/          React SPA (Vercel)
 ├── server/          Node API + scheduler + worker (Render)
-├── render.yaml      Optional Render blueprint
 └── .github/workflows/ci.yml
 ```
 
