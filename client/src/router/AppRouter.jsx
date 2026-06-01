@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import Layout from '../components/Layout/Layout';
 import ProtectedRoute from './ProtectedRoute';
+import Landing from '../pages/Landing/Landing';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
 import Dashboard from '../pages/Dashboard';
@@ -15,12 +16,15 @@ import NotFound from '../pages/NotFound';
 const AppRouter = () => {
   return (
     <Routes>
+      {/* Public routes */}
+      <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       
+      {/* Protected app routes */}
       <Route element={<ProtectedRoute />}>
         <Route element={<Layout />}>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           
           <Route path="/jobs" element={<JobList />} />
           <Route path="/jobs/new" element={<JobForm />} />

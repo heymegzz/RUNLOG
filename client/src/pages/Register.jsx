@@ -10,14 +10,14 @@ const Register = () => {
   const navigate = useNavigate();
 
   if (isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const success = await register({ name, email, password });
     if (success) {
-      navigate('/');
+      navigate('/dashboard');
     }
   };
 

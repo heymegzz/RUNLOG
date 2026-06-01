@@ -9,14 +9,14 @@ const Login = () => {
   const navigate = useNavigate();
 
   if (isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const success = await login({ email, password });
     if (success) {
-      navigate('/');
+      navigate('/dashboard');
     }
   };
 
@@ -24,7 +24,7 @@ const Login = () => {
     setEmail('demo@runlog.dev');
     setPassword('demo123');
     const success = await login({ email: 'demo@runlog.dev', password: 'demo123' });
-    if (success) navigate('/');
+    if (success) navigate('/dashboard');
   };
 
   return (

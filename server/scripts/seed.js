@@ -27,19 +27,20 @@ const seed = async () => {
     const user = new User({
       name: 'Demo User',
       email: 'demo@runlog.dev',
-      password: hashedPassword
+      passwordHash: hashedPassword
     });
     await user.save();
 
     // 2. Create Workspace
     const workspace = new Workspace({
       name: 'Demo Workspace',
+      slug: 'demo-workspace',
       owner: user._id,
       members: [{ user: user._id, role: 'owner' }]
     });
     await workspace.save();
 
-    user.workspaces.push(workspace._id);
+    user.activeWorkspace = workspace._id;
     await user.save();
 
     // 3. Create Jobs
