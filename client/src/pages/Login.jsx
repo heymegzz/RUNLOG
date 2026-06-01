@@ -22,57 +22,66 @@ const Login = () => {
   };
 
   const handleDemoLogin = async () => {
-    setEmail('demo@runlog.dev');
-    setPassword('demo123');
     const success = await login({ email: 'demo@runlog.dev', password: 'demo123' });
     if (success) navigate('/dashboard');
   };
 
   return (
-    <AuthShell title="Welcome back" subtitle="Sign in to manage your scheduled jobs">
-      {error && <div className="alert alert-error">{error}</div>}
+    <AuthShell
+      mode="login"
+      eyebrow="Sign in"
+      title="Welcome back"
+      subtitle="Manage cron jobs, stream runs, and alert your team from one place."
+    >
+      {error && <div className="auth-alert auth-alert-error">{error}</div>}
 
       <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label className="form-label" htmlFor="login-email">Email</label>
+        <div className="auth-field">
+          <label className="auth-label" htmlFor="login-email">Email</label>
           <input
             id="login-email"
             type="email"
-            className="form-input"
+            className="auth-input"
+            placeholder="you@company.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
             required
           />
         </div>
-        <div className="form-group">
-          <label className="form-label" htmlFor="login-password">Password</label>
+        <div className="auth-field">
+          <label className="auth-label" htmlFor="login-password">Password</label>
           <input
             id="login-password"
             type="password"
-            className="form-input"
+            className="auth-input"
+            placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
             required
           />
         </div>
-        <button type="submit" className="btn btn-primary btn-auth" disabled={isLoading}>
-          {isLoading ? 'Logging in…' : 'Sign in'}
-        </button>
+        <div className="auth-actions">
+          <button type="submit" className="auth-btn auth-btn-primary" disabled={isLoading}>
+            {isLoading ? 'Signing in…' : 'Sign in'}
+          </button>
+        </div>
       </form>
 
-      <p className="auth-divider">or</p>
+      <div className="auth-or">or</div>
       <button
         type="button"
-        className="btn btn-secondary btn-auth"
+        className="auth-btn auth-btn-ghost"
         onClick={handleDemoLogin}
         disabled={isLoading}
       >
-        Try demo — no signup needed
+        Continue with demo account
       </button>
 
-      <div className="auth-link">
-        Don&apos;t have an account? <Link to="/register">Create one</Link>
-      </div>
+      <p className="auth-switch">
+        No account yet? <Link to="/register">Create one</Link>
+      </p>
     </AuthShell>
   );
 };

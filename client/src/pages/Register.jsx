@@ -23,51 +23,64 @@ const Register = () => {
   };
 
   return (
-    <AuthShell title="Create your account" subtitle="Get started with reliable job scheduling">
-      {error && <div className="alert alert-error">{error}</div>}
+    <AuthShell
+      mode="register"
+      eyebrow="Get started"
+      title="Create your account"
+      subtitle="Free tier includes 5 jobs and a live feed — no credit card required."
+    >
+      {error && <div className="auth-alert auth-alert-error">{error}</div>}
 
       <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label className="form-label" htmlFor="reg-name">Name</label>
+        <div className="auth-field">
+          <label className="auth-label" htmlFor="reg-name">Name</label>
           <input
             id="reg-name"
             type="text"
-            className="form-input"
+            className="auth-input"
+            placeholder="Alex Chen"
             value={name}
             onChange={(e) => setName(e.target.value)}
+            autoComplete="name"
             required
           />
         </div>
-        <div className="form-group">
-          <label className="form-label" htmlFor="reg-email">Email</label>
+        <div className="auth-field">
+          <label className="auth-label" htmlFor="reg-email">Email</label>
           <input
             id="reg-email"
             type="email"
-            className="form-input"
+            className="auth-input"
+            placeholder="you@company.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
             required
           />
         </div>
-        <div className="form-group">
-          <label className="form-label" htmlFor="reg-password">Password</label>
+        <div className="auth-field">
+          <label className="auth-label" htmlFor="reg-password">Password</label>
           <input
             id="reg-password"
             type="password"
-            className="form-input"
+            className="auth-input"
+            placeholder="Min. 8 characters"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            autoComplete="new-password"
             required
           />
         </div>
-        <button type="submit" className="btn btn-primary btn-auth" disabled={isLoading}>
-          {isLoading ? 'Creating account…' : 'Create account'}
-        </button>
+        <div className="auth-actions">
+          <button type="submit" className="auth-btn auth-btn-primary" disabled={isLoading}>
+            {isLoading ? 'Creating account…' : 'Create account'}
+          </button>
+        </div>
       </form>
 
-      <div className="auth-link">
+      <p className="auth-switch">
         Already have an account? <Link to="/login">Sign in</Link>
-      </div>
+      </p>
     </AuthShell>
   );
 };
