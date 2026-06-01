@@ -2,6 +2,7 @@ import { Outlet, NavLink, useLocation, Navigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import NotificationBell from '../NotificationBell/NotificationBell';
 import Toast from '../Toast/Toast';
+import Logo from '../Brand/Logo';
 
 const Layout = () => {
   const { user, logout, token } = useAuthStore();
@@ -19,10 +20,7 @@ const Layout = () => {
     <div className="layout">
       {/* Sidebar */}
       <aside className="sidebar">
-        <div className="sidebar-logo">
-          <div className="sidebar-logo-icon"></div>
-          <span className="sidebar-logo-text">RunLog</span>
-        </div>
+        <Logo to="/dashboard" unified className="sidebar-logo brand--nav" />
 
         <nav className="sidebar-nav">
           <div className="sidebar-section-label">Main</div>

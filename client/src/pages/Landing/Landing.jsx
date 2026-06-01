@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import Logo from '../../components/Brand/Logo';
 import './landing.css';
 
 const easeOutQuart = (t) => 1 - Math.pow(1 - t, 4);
@@ -856,7 +857,7 @@ function FinalCTA() {
                 <span className="final-preview-stat-val">1,204</span> runs today
               </span>
               <span className="final-preview-stat">
-                <span className="final-preview-stat-val accent">98.2%</span> success
+                <span className="final-preview-stat-val">98.2%</span> success
               </span>
             </div>
           </div>
@@ -864,27 +865,39 @@ function FinalCTA() {
       </div>
 
       <footer className="site-footer">
-        <div className="footer-brand" aria-hidden>
-          <div className="footer-brand-line" />
-          <p className="footer-brand-name">
-            <span className="footer-brand-run">Run</span>
-            <span className="footer-brand-log">log</span>
-          </p>
-          <div className="footer-brand-line" />
-        </div>
-        <div className="footer-bar">
-          <div className="footer-status">
-            <span className="nav-dot" /> All systems operational
+        <div className="footer-shell">
+          <div className="footer-grid">
+            <div className="footer-brand-col">
+              <Logo to="/" unified className="footer-logo brand--nav" />
+              <p className="footer-lead">
+                Cron orchestration and live execution logs for engineering teams.
+              </p>
+            </div>
+            <div className="footer-links-col">
+              <p className="footer-col-label">Product</p>
+              <nav className="footer-col-nav" aria-label="Product">
+                <a href="#features" className="footer-link">Features</a>
+                <a href="#how" className="footer-link">How it works</a>
+                <a href="#pricing" className="footer-link">Pricing</a>
+                <Link to="/register" className="footer-link">Get started</Link>
+              </nav>
+            </div>
+            <div className="footer-links-col">
+              <p className="footer-col-label">Company</p>
+              <nav className="footer-col-nav" aria-label="Company">
+                <a href="mailto:hello@runlog.dev" className="footer-link">Contact</a>
+                <a href="#" className="footer-link">Docs</a>
+                <a href="#" className="footer-link">Privacy</a>
+                <Link to="/login" className="footer-link">Log in</Link>
+              </nav>
+            </div>
           </div>
-          <div className="footer-links">
-            <a href="#features">Features</a>
-            <a href="#pricing">Pricing</a>
-            <a href="#">Docs</a>
-            <Link to="/login">Log in</Link>
-            <a href="#">Privacy</a>
-            <a href="#">Terms</a>
+          <div className="footer-bar">
+            <span className="footer-copy">© {year} Runlog</span>
+            <span className="footer-status">
+              <span className="nav-dot" /> All systems operational
+            </span>
           </div>
-          <p className="footer-copy">© {year} Runlog</p>
         </div>
       </footer>
     </section>
@@ -904,9 +917,7 @@ export default function Landing() {
     <div className="landing-page">
       <nav className="nav-glass">
         <div className="nav-inner">
-          <Link to="/" className="nav-logo">
-            Runlog
-          </Link>
+          <Logo to="/" unified className="nav-logo brand--nav" />
           <div className="nav-links">
             <a href="#how" className="nav-link">How it works</a>
             <a href="#features" className="nav-link">Features</a>

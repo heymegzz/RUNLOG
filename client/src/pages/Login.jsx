@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import AuthShell from '../components/Auth/AuthShell';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -28,61 +29,51 @@ const Login = () => {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-card">
-        <div className="auth-logo">
-          <div className="auth-logo-icon">⚡</div>
-          <div className="auth-logo-text">RunLog</div>
-        </div>
-        
-        <h1 className="auth-title">Welcome Back</h1>
-        <p className="auth-subtitle">Sign in to manage your background jobs</p>
-        
-        {error && <div className="alert alert-error">{error}</div>}
-        
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label className="form-label">Email</label>
-            <input 
-              type="email" 
-              className="form-input"
-              value={email} 
-              onChange={(e) => setEmail(e.target.value)} 
-              required 
-            />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Password</label>
-            <input 
-              type="password" 
-              className="form-input"
-              value={password} 
-              onChange={(e) => setPassword(e.target.value)} 
-              required 
-            />
-          </div>
-          <button type="submit" className="btn btn-primary btn-auth" disabled={isLoading}>
-            {isLoading ? 'Logging in...' : 'Login'}
-          </button>
-        </form>
+    <AuthShell title="Welcome back" subtitle="Sign in to manage your scheduled jobs">
+      {error && <div className="alert alert-error">{error}</div>}
 
-        <div style={{ margin: '1rem 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-          or
+      <form onSubmit={handleSubmit}>
+        <div className="form-group">
+          <label className="form-label" htmlFor="login-email">Email</label>
+          <input
+            id="login-email"
+            type="email"
+            className="form-input"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
         </div>
-        <button
-          type="button"
-          className="btn btn-secondary btn-auth"
-          onClick={handleDemoLogin}
-          disabled={isLoading}
-        >
-          Try demo — no signup needed
+        <div className="form-group">
+          <label className="form-label" htmlFor="login-password">Password</label>
+          <input
+            id="login-password"
+            type="password"
+            className="form-input"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        <button type="submit" className="btn btn-primary btn-auth" disabled={isLoading}>
+          {isLoading ? 'Logging in…' : 'Sign in'}
         </button>
+      </form>
 
-        <div className="auth-link">
-          Don't have an account? <Link to="/register">Register</Link>
-        </div>
+      <p className="auth-divider">or</p>
+      <button
+        type="button"
+        className="btn btn-secondary btn-auth"
+        onClick={handleDemoLogin}
+        disabled={isLoading}
+      >
+        Try demo — no signup needed
+      </button>
+
+      <div className="auth-link">
+        Don&apos;t have an account? <Link to="/register">Create one</Link>
       </div>
-    </div>
+    </AuthShell>
   );
 };
 

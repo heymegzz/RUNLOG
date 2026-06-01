@@ -4,6 +4,7 @@ import { useSocket } from '../hooks/useSocket';
 import { Link } from 'react-router-dom';
 import api from '../api/axios';
 import { relativeTime } from '../utils/time';
+import Logo from '../components/Brand/Logo';
 
 const Dashboard = () => {
   const { user } = useAuthStore();
@@ -54,9 +55,9 @@ const Dashboard = () => {
 
       {!error && stats?.jobs?.total === 0 ? (
         <div style={{ textAlign: 'center', padding: '4rem 2rem' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⚡</div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 500, marginBottom: '0.5rem' }}>
-            Welcome to RunLog
+          <Logo size="lg" className="empty-state-brand" />
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 500, marginBottom: '0.5rem', letterSpacing: '-0.03em' }}>
+            Welcome to Runlog
           </h2>
           <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', maxWidth: '360px', margin: '0 auto 1.5rem' }}>
             Schedule your first HTTP job and see it execute in real time.

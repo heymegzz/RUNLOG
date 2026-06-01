@@ -1,0 +1,226 @@
+{
+  "total_count": 3,
+  "jobs": [
+    {
+      "id": 78819752593,
+      "run_id": 26745479883,
+      "workflow_name": "RunLog CI/CD Pipeline",
+      "head_branch": "main",
+      "run_url": "https://api.github.com/repos/heymegzz/RUNLOG/actions/runs/26745479883",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOSlKqmM8AAAASWgX6kQ",
+      "head_sha": "5a35f9ff278bca79843f37288d4f511feb7c0f64",
+      "url": "https://api.github.com/repos/heymegzz/RUNLOG/actions/jobs/78819752593",
+      "html_url": "https://github.com/heymegzz/RUNLOG/actions/runs/26745479883/job/78819752593",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-06-01T09:03:36Z",
+      "started_at": "2026-06-01T09:03:38Z",
+      "completed_at": "2026-06-01T09:04:08Z",
+      "name": "test-server",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-06-01T09:03:39Z",
+          "completed_at": "2026-06-01T09:03:40Z"
+        },
+        {
+          "name": "Initialize containers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-06-01T09:03:40Z",
+          "completed_at": "2026-06-01T09:03:54Z"
+        },
+        {
+          "name": "Run actions/checkout@v3",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-06-01T09:03:54Z",
+          "completed_at": "2026-06-01T09:03:55Z"
+        },
+        {
+          "name": "Use Node.js",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-06-01T09:03:55Z",
+          "completed_at": "2026-06-01T09:04:02Z"
+        },
+        {
+          "name": "Install Dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-06-01T09:04:02Z",
+          "completed_at": "2026-06-01T09:04:04Z"
+        },
+        {
+          "name": "Post Use Node.js",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-06-01T09:04:04Z",
+          "completed_at": "2026-06-01T09:04:05Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v3",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-06-01T09:04:05Z",
+          "completed_at": "2026-06-01T09:04:05Z"
+        },
+        {
+          "name": "Stop containers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-06-01T09:04:05Z",
+          "completed_at": "2026-06-01T09:04:06Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2026-06-01T09:04:06Z",
+          "completed_at": "2026-06-01T09:04:06Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/heymegzz/RUNLOG/check-runs/78819752593",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000000153,
+      "runner_name": "GitHub Actions 1000000153",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 78819752630,
+      "run_id": 26745479883,
+      "workflow_name": "RunLog CI/CD Pipeline",
+      "head_branch": "main",
+      "run_url": "https://api.github.com/repos/heymegzz/RUNLOG/actions/runs/26745479883",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOSlKqmM8AAAASWgX6tg",
+      "head_sha": "5a35f9ff278bca79843f37288d4f511feb7c0f64",
+      "url": "https://api.github.com/repos/heymegzz/RUNLOG/actions/jobs/78819752630",
+      "html_url": "https://github.com/heymegzz/RUNLOG/actions/runs/26745479883/job/78819752630",
+      "status": "completed",
+      "conclusion": "failure",
+      "created_at": "2026-06-01T09:03:36Z",
+      "started_at": "2026-06-01T09:03:39Z",
+      "completed_at": "2026-06-01T09:03:47Z",
+      "name": "build-client",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-06-01T09:03:39Z",
+          "completed_at": "2026-06-01T09:03:40Z"
+        },
+        {
+          "name": "Run actions/checkout@v3",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-06-01T09:03:40Z",
+          "completed_at": "2026-06-01T09:03:41Z"
+        },
+        {
+          "name": "Use Node.js",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-06-01T09:03:41Z",
+          "completed_at": "2026-06-01T09:03:45Z"
+        },
+        {
+          "name": "Install Dependencies",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 4,
+          "started_at": "2026-06-01T09:03:45Z",
+          "completed_at": "2026-06-01T09:03:45Z"
+        },
+        {
+          "name": "Build React App",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 5,
+          "started_at": "2026-06-01T09:03:45Z",
+          "completed_at": "2026-06-01T09:03:45Z"
+        },
+        {
+          "name": "Post Use Node.js",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 9,
+          "started_at": "2026-06-01T09:03:45Z",
+          "completed_at": "2026-06-01T09:03:45Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v3",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-06-01T09:03:45Z",
+          "completed_at": "2026-06-01T09:03:46Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2026-06-01T09:03:46Z",
+          "completed_at": "2026-06-01T09:03:46Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/heymegzz/RUNLOG/check-runs/78819752630",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000000154,
+      "runner_name": "GitHub Actions 1000000154",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 78819839511,
+      "run_id": 26745479883,
+      "workflow_name": "RunLog CI/CD Pipeline",
+      "head_branch": "main",
+      "run_url": "https://api.github.com/repos/heymegzz/RUNLOG/actions/runs/26745479883",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOSlKqmM8AAAASWgdOFw",
+      "head_sha": "5a35f9ff278bca79843f37288d4f511feb7c0f64",
+      "url": "https://api.github.com/repos/heymegzz/RUNLOG/actions/jobs/78819839511",
+      "html_url": "https://github.com/heymegzz/RUNLOG/actions/runs/26745479883/job/78819839511",
+      "status": "completed",
+      "conclusion": "skipped",
+      "created_at": "2026-06-01T09:04:08Z",
+      "started_at": "2026-06-01T09:04:08Z",
+      "completed_at": "2026-06-01T09:04:08Z",
+      "name": "docker-build",
+      "steps": [
+
+      ],
+      "check_run_url": "https://api.github.com/repos/heymegzz/RUNLOG/check-runs/78819839511",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": null,
+      "runner_name": null,
+      "runner_group_id": null,
+      "runner_group_name": null
+    }
+  ]
+}
