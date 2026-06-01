@@ -4,15 +4,6 @@ import './landing.css';
 
 const easeOutQuart = (t) => 1 - Math.pow(1 - t, 4);
 
-function AmbientOrbs() {
-  return (
-    <div className="ambient-orbs" aria-hidden>
-      <span className="orb orb-1" />
-      <span className="orb orb-2" />
-    </div>
-  );
-}
-
 function useReveal(className = 'reveal-hidden', options = { threshold: 0.12 }) {
   const ref = useRef(null);
   useEffect(() => {
@@ -66,71 +57,6 @@ function useRafCountUp(target, { duration = 2200, decimals = 0, startOnMount = f
   }, [startOnMount, run]);
 
   return [val, ref];
-}
-
-function HeroCanvas() {
-  const canvasRef = useRef(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    let raf;
-    let cols = 0;
-    let rows = 0;
-    const colFlash = [];
-
-    const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = canvas.offsetWidth * dpr;
-      canvas.height = canvas.offsetHeight * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const gap = 28;
-      cols = Math.ceil(canvas.offsetWidth / gap) + 1;
-      rows = Math.ceil(canvas.offsetHeight / gap) + 1;
-      colFlash.length = cols;
-      for (let i = 0; i < cols; i++) colFlash[i] = 0;
-    };
-
-    resize();
-    window.addEventListener('resize', resize);
-
-    const loop = () => {
-      const w = canvas.offsetWidth;
-      const h = canvas.offsetHeight;
-      ctx.clearRect(0, 0, w, h);
-      const gap = 28;
-
-      for (let c = 0; c < cols; c++) {
-        if (Math.random() < 0.008) colFlash[c] = 1;
-        if (colFlash[c] > 0) colFlash[c] -= 0.02;
-      }
-
-      for (let x = 0; x < cols; x++) {
-        for (let y = 0; y < rows; y++) {
-          const px = x * gap;
-          const py = y * gap;
-          const flash = colFlash[x] || 0;
-          const alpha = 0.12 + flash * 0.55;
-          ctx.fillStyle = flash > 0.05
-            ? `rgba(129, 140, 248, ${alpha})`
-            : `rgba(100, 130, 150, ${0.1})`;
-          ctx.beginPath();
-          ctx.arc(px, py, flash > 0.05 ? 2 : 1, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-      raf = requestAnimationFrame(loop);
-    };
-    loop();
-
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener('resize', resize);
-    };
-  }, []);
-
-  return <canvas className="hero-canvas" ref={canvasRef} aria-hidden />;
 }
 
 const CYCLE_WORDS = ['send-digest', 'sync-inventory', 'process-payments', 'cleanup-sessions', 'daily-report'];
@@ -243,7 +169,7 @@ function MetricBlock({ value, suffix, label, decimals = 0 }) {
   const num = parseFloat(String(value).replace(/[^\d.]/g, ''));
   const [count, ref] = useRafCountUp(num, { decimals, duration: 2400 });
   return (
-    <div ref={ref}>
+    <div className="metric-item" ref={ref}>
       <div className="metric-num">
         {decimals ? count.toFixed(decimals) : count}
         {suffix}
@@ -410,12 +336,6 @@ function HowItWorks() {
     <div className="hiw-wrap" ref={wrapRef}>
       <div className="hiw-line-track" ref={trackRef}>
         <svg width="3" height="100%" aria-hidden>
-          <defs>
-            <linearGradient id="hiwLineGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#818cf8" />
-              <stop offset="100%" stopColor="#a5b4fc" />
-            </linearGradient>
-          </defs>
           <line className="hiw-line-bg" x1="1.5" y1="0" x2="1.5" y2="100%" />
           <line ref={fillRef} className="hiw-line-fill" x1="1.5" y1="0" x2="1.5" y2="100" />
           <circle ref={headRef} className="hiw-line-head" r="5" cx="1.5" cy="0" />
@@ -466,7 +386,7 @@ function FeatCard({ card, delayClass }) {
   return (
     <div
       ref={ref}
-      className={`feat-card reveal-hidden reveal-tilt ${card.span ? 'span-2' : ''} ${delayClass}`}
+      className={`feat-card reveal-hidden feat-card--${card.layout} ${delayClass}`}
     >
       <h4>{card.title}</h4>
       <p>{card.desc}</p>
@@ -475,20 +395,21 @@ function FeatCard({ card, delayClass }) {
   );
 }
 
+const FEATURE_CARDS = [
+  { id: 'feed', title: 'Live Execution Feed', desc: 'WebSocket stream pushes every result in under 200ms. Filter by job, status, or workspace.', layout: 'hero', mini: true },
+  { id: 'cron', title: 'Cron Scheduler', desc: 'Standard cron expressions with timezone support and collision preview.', layout: 'side' },
+  { id: 'retry', title: 'Retry Engine', desc: 'Exponential backoff with configurable max attempts and jitter.', layout: 'side' },
+  { id: 'alerts', title: 'Failure Alerts', desc: 'Email, Slack, and PagerDuty on final failure — not on every retry.', layout: 'bottom' },
+  { id: 'rbac', title: 'Team RBAC', desc: 'Owner, admin, and developer roles per workspace.', layout: 'bottom' },
+  { id: 'api', title: 'API Keys', desc: 'Trigger jobs from CI/CD or scripts with scoped keys.', layout: 'bottom' },
+];
+
 function FeaturesGrid() {
-  const cards = [
-    { title: 'Live Execution Feed', desc: 'WebSocket stream pushes every result in under 200ms. Filter by job, status, or workspace.', span: true, mini: true },
-    { title: 'Cron Scheduler', desc: 'Standard cron expressions with timezone support and collision preview.' },
-    { title: 'Retry Engine', desc: 'Exponential backoff with configurable max attempts and jitter.' },
-    { title: 'Failure Alerts', desc: 'Email, Slack, and PagerDuty on final failure — not on every retry.' },
-    { title: 'Team RBAC', desc: 'Owner, admin, and developer roles per workspace.' },
-    { title: 'API Keys', desc: 'Trigger jobs from CI/CD or scripts with scoped keys.' },
-  ];
   const delays = ['', 'reveal-delay-1', 'reveal-delay-2'];
   return (
-    <div className="feat-grid">
-      {cards.map((c, i) => (
-        <FeatCard key={c.title} card={c} delayClass={delays[i % 3]} />
+    <div className="feat-bento">
+      {FEATURE_CARDS.map((c, i) => (
+        <FeatCard key={c.id} card={c} delayClass={delays[i % 3]} />
       ))}
     </div>
   );
@@ -519,7 +440,7 @@ const TERM_CMDS = {
 };
 
 function lineColor(t) {
-  if (t === 'ok') return 'var(--accent)';
+  if (t === 'ok') return 'var(--status-ok)';
   if (t === 'warn') return 'var(--status-warn)';
   if (t === 'err') return 'var(--status-err)';
   if (t === 'run') return 'var(--status-run)';
@@ -607,7 +528,7 @@ function InteractiveTerminal() {
         <div className="iterm-prompt">runlog@prod ~ %</div>
         {cmd && (
           <div className="iterm-line typing">
-            <span style={{ color: 'var(--accent)' }}>{typedCmd}</span>
+            <span style={{ color: 'var(--text)' }}>{typedCmd}</span>
             {running && typedCmd.length < `$ ${cmd}`.length && <span className="iterm-cursor" />}
           </div>
         )}
@@ -677,7 +598,7 @@ function Dashboard3D() {
     target.current.x = ((r.height / 2 - y) / (r.height / 2)) * 8;
     target.current.y = ((x - r.width / 2) / (r.width / 2)) * 8;
     if (sheenRef.current) {
-      sheenRef.current.style.background = `radial-gradient(circle 280px at ${x}px ${y}px, rgba(129,140,248,0.14) 0%, transparent 55%)`;
+      sheenRef.current.style.background = `radial-gradient(circle 200px at ${x}px ${y}px, rgba(255,255,255,0.04) 0%, transparent 70%)`;
     }
   };
 
@@ -706,7 +627,7 @@ function Dashboard3D() {
           <div className="dash-sheen" ref={sheenRef} />
           <div className="dash-layout">
             <aside className="dash-side">
-              <div className="dash-side-logo">RUNLOG</div>
+              <div className="dash-side-logo">Runlog</div>
               <div className="dash-nav-item on">Overview</div>
               <div className="dash-nav-item">Jobs</div>
               <div className="dash-nav-item">Executions</div>
@@ -724,8 +645,8 @@ function Dashboard3D() {
                 <svg viewBox="0 0 400 100" width="100%" height="100%" preserveAspectRatio="none">
                   <defs>
                     <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="rgba(129,140,248,0.4)" />
-                      <stop offset="100%" stopColor="rgba(129,140,248,0)" />
+                      <stop offset="0%" stopColor="rgba(255,255,255,0.08)" />
+                      <stop offset="100%" stopColor="rgba(255,255,255,0)" />
                     </linearGradient>
                   </defs>
                   <path className="chart-fill" d="M0,80 L50,65 L100,70 L150,45 L200,50 L250,30 L300,35 L350,20 L400,25 L400,100 L0,100 Z" />
@@ -757,26 +678,18 @@ function Dashboard3D() {
 }
 
 const TESTI_QUOTES = [
-  { q: 'We replaced three cron scripts and a Slack bot with Runlog. On-call finally sees failures before customers do.', name: 'Priya N.', role: 'Staff Engineer', co: 'Meridian Pay', initials: 'PN', grad: 'linear-gradient(135deg, #818cf8, #6366f1)' },
-  { q: 'The live feed is what sold us — it feels like tailing production, except every line is a scheduled job we actually own.', name: 'James K.', role: 'Platform Lead', co: 'Northline', initials: 'JK', grad: 'linear-gradient(135deg, #818cf8, #6366f1)' },
-  { q: 'Five minutes from signup to first scheduled fire. The retry defaults alone saved us a week of glue code.', name: 'Alex R.', role: 'Backend Engineer', co: 'Stackform', initials: 'AR', grad: 'linear-gradient(135deg, #f472b6, #c084fc)' },
+  { q: 'We replaced three cron scripts and a Slack bot with Runlog. On-call finally sees failures before customers do.', name: 'Priya N.', role: 'Staff Engineer', co: 'Meridian Pay', initials: 'PN' },
+  { q: 'The live feed is what sold us — it feels like tailing production, except every line is a scheduled job we actually own.', name: 'James K.', role: 'Platform Lead', co: 'Northline', initials: 'JK' },
+  { q: 'Five minutes from signup to first scheduled fire. The retry defaults alone saved us a week of glue code.', name: 'Alex R.', role: 'Backend Engineer', co: 'Stackform', initials: 'AR' },
 ];
 
 function Testimonials() {
-  const [active, setActive] = useState(0);
   const [teams, teamsRef] = useRafCountUp(240, { duration: 2000 });
   const headRef = useReveal();
 
-  useEffect(() => {
-    const iv = setInterval(() => {
-      setActive((a) => (a + 1) % TESTI_QUOTES.length);
-    }, 5500);
-    return () => clearInterval(iv);
-  }, []);
-
   return (
     <>
-      <div ref={headRef} className="testi-section-head reveal-hidden">
+      <div ref={headRef} className="reveal-hidden">
         <div className="testi-stats">
           <div ref={teamsRef}>
             <div className="testi-stat-val">{teams}+</div>
@@ -792,33 +705,19 @@ function Testimonials() {
           </div>
         </div>
       </div>
-      <div className="testi-carousel">
-        <div className="testi-track" style={{ minHeight: 220 }}>
-          {TESTI_QUOTES.map((t, i) => (
-            <article key={t.name} className={`testi-card ${i === active ? 'active' : ''}`}>
-              <div className="testi-quote-mark">&ldquo;</div>
-              <p className="testi-quote">{t.q}</p>
-              <div className="testi-footer">
-                <div className="testi-avatar" style={{ background: t.grad }}>{t.initials}</div>
-                <div>
-                  <div className="testi-author">{t.name}</div>
-                  <div className="testi-role">{t.role} · {t.co}</div>
-                </div>
+      <div className="testi-grid">
+        {TESTI_QUOTES.map((t) => (
+          <article key={t.name} className="testi-card">
+            <p className="testi-quote">&ldquo;{t.q}&rdquo;</p>
+            <div className="testi-footer">
+              <div className="testi-avatar">{t.initials}</div>
+              <div>
+                <div className="testi-author">{t.name}</div>
+                <div className="testi-role">{t.role} · {t.co}</div>
               </div>
-            </article>
-          ))}
-        </div>
-        <div className="testi-dots">
-          {TESTI_QUOTES.map((t, i) => (
-            <button
-              key={t.name}
-              type="button"
-              className={`testi-dot ${i === active ? 'active' : ''}`}
-              aria-label={`Show quote from ${t.name}`}
-              onClick={() => setActive(i)}
-            />
-          ))}
-        </div>
+            </div>
+          </article>
+        ))}
       </div>
       <div className="testi-logos">
         {['Meridian Pay', 'Northline', 'Stackform', 'Relay DB'].map((name) => (
@@ -845,8 +744,11 @@ function Pricing() {
 
   return (
     <>
+      <div className="sec-header center pricing-sec-head">
+        <p className="sec-eyebrow">Pricing</p>
+        <h2 className="sec-title center">Simple, transparent plans</h2>
+      </div>
       <div className="pricing-head">
-        <h2 className="sec-title center" style={{ marginBottom: 0 }}>Pricing</h2>
         <div className="billing-toggle">
           <div className={`billing-pill ${yearly ? 'yearly' : ''}`} />
           <button type="button" className={`billing-btn ${!yearly ? 'active' : ''}`} onClick={() => setYearly(false)}>Monthly</button>
@@ -887,46 +789,104 @@ function Pricing() {
 }
 
 function FinalCTA() {
-  const btnRef = useRef(null);
-  const spawnSpark = (e) => {
-    const btn = btnRef.current;
-    if (!btn) return;
-    const r = btn.getBoundingClientRect();
-    for (let i = 0; i < 8; i++) {
-      const s = document.createElement('span');
-      s.className = 'spark';
-      const angle = (Math.PI * 2 * i) / 8;
-      const dist = 24 + Math.random() * 20;
-      s.style.setProperty('--sx', `${Math.cos(angle) * dist}px`);
-      s.style.setProperty('--sy', `${Math.sin(angle) * dist}px`);
-      s.style.left = `${e.clientX - r.left}px`;
-      s.style.top = `${e.clientY - r.top}px`;
-      btn.appendChild(s);
-      setTimeout(() => s.remove(), 650);
-    }
-  };
-
   const ref = useReveal();
+  const year = new Date().getFullYear();
+
   return (
-    <section className="final-cta">
-      <div className="final-cta-art" role="presentation" />
-      <div className="final-cta-vignette" />
-      <div className="final-cta-grain" />
-      <div className="final-cta-bg" />
-      <div ref={ref} className="final-cta-inner reveal-hidden">
-        <h2>Your cron jobs deserve an ops layer</h2>
-        <p className="final-cta-sub">
-          Ship scheduled HTTP work with retries, alerts, and a live feed — without babysitting cron on a box somewhere.
-        </p>
-        <Link
-          to="/register"
-          className="cta-spark-btn"
-          ref={btnRef}
-          onMouseEnter={spawnSpark}
-        >
-          Deploy your first job
-        </Link>
+    <section className="landing-close" aria-labelledby="final-cta-heading">
+      <div className="landing-close-bg" aria-hidden>
+        <div className="landing-close-art" />
+        <div className="landing-close-vignette" />
       </div>
+
+      <div className="final-cta">
+        <div ref={ref} className="final-cta-layout reveal-hidden">
+          <div className="final-cta-card">
+            <p className="final-cta-eyebrow">Ready when you are</p>
+            <h2 id="final-cta-heading" className="final-cta-title">
+              Your cron jobs deserve an ops layer
+            </h2>
+            <p className="final-cta-sub">
+              Ship scheduled HTTP work with retries, alerts, and a live feed — without babysitting cron on a box somewhere.
+            </p>
+            <div className="final-cta-actions">
+              <Link to="/register" className="btn-primary">
+                Get started free
+              </Link>
+              <a href="#how" className="btn-secondary">
+                See how it works
+              </a>
+            </div>
+            <ul className="final-cta-trust" aria-label="Plan highlights">
+              <li>5 jobs on free tier</li>
+              <li>No credit card</li>
+              <li>Live in ~5 minutes</li>
+            </ul>
+          </div>
+
+          <div className="final-cta-preview" aria-hidden>
+            <div className="final-preview-chrome">
+              <span className="final-preview-dot" />
+              <span className="final-preview-dot" />
+              <span className="final-preview-dot" />
+              <span className="final-preview-label">runlog — schedules</span>
+            </div>
+            <div className="final-preview-rows">
+              <div className="final-preview-row">
+                <span className="final-preview-method">POST</span>
+                <span className="final-preview-path">/api/sync-inventory</span>
+                <span className="final-preview-cron">*/15 * * * *</span>
+                <span className="final-preview-status ok">ok</span>
+              </div>
+              <div className="final-preview-row">
+                <span className="final-preview-method">GET</span>
+                <span className="final-preview-path">/health/deep</span>
+                <span className="final-preview-cron">0 * * * *</span>
+                <span className="final-preview-status ok">ok</span>
+              </div>
+              <div className="final-preview-row dim">
+                <span className="final-preview-method">POST</span>
+                <span className="final-preview-path">/webhooks/reconcile</span>
+                <span className="final-preview-cron">0 2 * * *</span>
+                <span className="final-preview-status run">run</span>
+              </div>
+            </div>
+            <div className="final-preview-foot">
+              <span className="final-preview-stat">
+                <span className="final-preview-stat-val">1,204</span> runs today
+              </span>
+              <span className="final-preview-stat">
+                <span className="final-preview-stat-val accent">98.2%</span> success
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer className="site-footer">
+        <div className="footer-brand" aria-hidden>
+          <div className="footer-brand-line" />
+          <p className="footer-brand-name">
+            <span className="footer-brand-run">Run</span>
+            <span className="footer-brand-log">log</span>
+          </p>
+          <div className="footer-brand-line" />
+        </div>
+        <div className="footer-bar">
+          <div className="footer-status">
+            <span className="nav-dot" /> All systems operational
+          </div>
+          <div className="footer-links">
+            <a href="#features">Features</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#">Docs</a>
+            <Link to="/login">Log in</Link>
+            <a href="#">Privacy</a>
+            <a href="#">Terms</a>
+          </div>
+          <p className="footer-copy">© {year} Runlog</p>
+        </div>
+      </footer>
     </section>
   );
 }
@@ -940,20 +900,12 @@ export default function Landing() {
   const heroContentRef = useReveal();
   const heroPanelRef = useReveal();
 
-  useEffect(() => {
-    const onMove = (e) => {
-      document.documentElement.style.setProperty('--trace-angle', `${(e.clientX / window.innerWidth) * 360}deg`);
-    };
-    window.addEventListener('mousemove', onMove);
-    return () => window.removeEventListener('mousemove', onMove);
-  }, []);
-
   return (
     <div className="landing-page">
       <nav className="nav-glass">
         <div className="nav-inner">
           <Link to="/" className="nav-logo">
-            <span className="nav-dot" /> RUNLOG
+            Runlog
           </Link>
           <div className="nav-links">
             <a href="#how" className="nav-link">How it works</a>
@@ -968,10 +920,12 @@ export default function Landing() {
       </nav>
 
       <section className="hero">
-        <HeroCanvas />
-        <div className="hero-scanlines" />
         <div className="hero-inner">
           <div ref={heroContentRef} className="reveal-hidden">
+            <div className="hero-pill">
+              <span className="hero-pill-dot" />
+              Cron orchestration for HTTP workloads
+            </div>
             <h1 className="hero-title">
               Schedule <HeadlineCycler />
               <br />
@@ -981,19 +935,19 @@ export default function Landing() {
               Register HTTP endpoints as cron jobs. Set schedules, stream execution logs in real time, and get retries, failure alerts, and team access — without another worker process.
             </p>
             <div className="hero-actions">
-              <Link to="/register" className="btn-primary">Deploy first job</Link>
+              <Link to="/register" className="btn-primary">Get started</Link>
               <a href="#how" className="btn-secondary">See how it works</a>
             </div>
           </div>
           <div ref={heroPanelRef} className="hero-panel reveal-hidden reveal-delay-1">
-            <div className="hero-panel-glow" />
+            <div className="hero-panel-glow" aria-hidden />
             <div className="hw-stats">
               <div className="hw-stat" ref={runsRef}>
                 <div className="hw-stat-val">{runs.toLocaleString()}</div>
                 <div className="hw-stat-label">Runs today</div>
               </div>
               <div className="hw-stat" ref={successRef}>
-                <div className="hw-stat-val st-accent">{success}%</div>
+                <div className="hw-stat-val">{success}%</div>
                 <div className="hw-stat-label">Success</div>
               </div>
               <div className="hw-stat" ref={durRef}>
@@ -1012,59 +966,67 @@ export default function Landing() {
 
       <MarqueeStrip />
 
-      <div className="section-divider" />
-
       <section className="metrics-section">
-        <div className="metrics-grid">
-          <MetricBlock value="30" suffix="×" label="faster than hand-rolled cron" />
-          <MetricBlock value="12" suffix="×" label="more failures caught before users" />
-          <MetricBlock value="99.9" suffix="%" label="uptime SLA" decimals={1} />
-          <MetricBlock value="5" suffix=" min" label="median time to first job" />
+        <div className="section-shell">
+          <div className="sec-header">
+            <p className="sec-eyebrow">Metrics</p>
+            <h2 className="sec-title left">The numbers teams care about.</h2>
+          </div>
+          <div className="metrics-grid">
+            <MetricBlock value="30" suffix="×" label="faster than hand-rolled cron" />
+            <MetricBlock value="12" suffix="×" label="more failures caught before users" />
+            <MetricBlock value="99.9" suffix="%" label="uptime SLA" decimals={1} />
+            <MetricBlock value="5" suffix=" min" label="median time to first job" />
+          </div>
         </div>
       </section>
 
-      <section className="section section-has-ambient" id="how">
-        <AmbientOrbs />
+      <section className="section" id="how">
         <div className="section-inner">
-          <div className="sec-eyebrow">Workflow</div>
-          <h2 className="sec-title left">How it works</h2>
+          <div className="sec-header wide">
+            <p className="sec-eyebrow">Workflow</p>
+            <h2 className="sec-title left">How it works</h2>
+          </div>
           <HowItWorks />
         </div>
       </section>
 
-      <div className="section-divider" />
-
-      <section className="section section-has-ambient" id="features">
-        <AmbientOrbs />
+      <section className="section" id="features">
         <div className="section-inner">
-          <div className="sec-eyebrow">Platform</div>
-          <h2 className="sec-title left">Built for production schedules</h2>
+          <div className="sec-header wide">
+            <p className="sec-eyebrow">Platform</p>
+            <h2 className="sec-title left">Built for production schedules</h2>
+          </div>
           <FeaturesGrid />
         </div>
       </section>
 
-      <section className="section terminal-section section-has-ambient">
-        <AmbientOrbs />
+      <section className="section terminal-section">
         <div className="section-inner">
-          <div className="sec-eyebrow">CLI</div>
-          <h2 className="sec-title center">Operate from the terminal</h2>
+          <div className="sec-header center">
+            <p className="sec-eyebrow">CLI</p>
+            <h2 className="sec-title center">Operate from the terminal</h2>
+          </div>
           <InteractiveTerminal />
         </div>
       </section>
 
       <section className="section">
         <div className="section-inner dash-section-head">
-          <div className="sec-eyebrow">Dashboard</div>
-          <h2 className="sec-title left">The control plane for every fire</h2>
+          <div className="sec-header wide">
+            <p className="sec-eyebrow">Dashboard</p>
+            <h2 className="sec-title left">The control plane for every fire</h2>
+          </div>
           <Dashboard3D />
         </div>
       </section>
 
-      <section className="section section-has-ambient">
-        <AmbientOrbs />
+      <section className="section">
         <div className="section-inner">
-          <div className="sec-eyebrow" style={{ textAlign: 'center' }}>Teams</div>
-          <h2 className="sec-title center">Trusted by engineers shipping daily</h2>
+          <div className="sec-header center testi-section-head">
+            <p className="sec-eyebrow">Customers</p>
+            <h2 className="sec-title center">Used by engineering teams</h2>
+          </div>
           <Testimonials />
         </div>
       </section>
@@ -1076,22 +1038,6 @@ export default function Landing() {
       </section>
 
       <FinalCTA />
-
-      <footer className="footer">
-        <div className="footer-inner">
-          <div className="footer-status">
-            <span className="nav-dot" /> All systems operational
-          </div>
-          <Link to="/" className="nav-logo" style={{ fontSize: '0.75rem' }}>RUNLOG</Link>
-          <div className="footer-links">
-            <a href="#features">Features</a>
-            <a href="#pricing">Pricing</a>
-            <a href="#">Docs</a>
-            <a href="#">Privacy</a>
-            <a href="#">Terms</a>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
