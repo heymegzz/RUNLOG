@@ -2,8 +2,21 @@ import { create } from 'zustand';
 import { authApi } from '../api/auth.api';
 import { getApiErrorMessage } from '../api/apiError';
 
+const normalizeStoredUser = (raw) => {
+  if (!raw) return null;
+  try {
+    const user = JSON.parse(raw);
+    if (!user) return null;
+    const ws = user.activeWorkspace;
+    const workspaceId = ws?._id ?? ws;
+    return workspaceId ? { ...user, activeWorkspace: String(workspaceId) } : user;
+  } catch {
+    return null;
+  }
+};
+
 export const useAuthStore = create((set) => ({
-  user: JSON.parse(localStorage.getItem('user')) || null,
+  user: normalizeStoredUser(localStorage.getItem('user')),
   token: localStorage.getItem('token') || null,
   isAuthenticated: !!localStorage.getItem('token'),
   isLoading: false,

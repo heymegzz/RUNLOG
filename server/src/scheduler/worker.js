@@ -2,7 +2,7 @@ import axios from 'axios';
 import jobQueue from '../queues/jobQueue.js';
 import Job from '../models/Job.js';
 import Execution from '../models/Execution.js';
-import { emitExecutionUpdate } from '../sockets/socketHandler.js';
+import { emitExecutionStarted, emitExecutionUpdate } from '../sockets/socketHandler.js';
 import { sendFailureAlert } from '../services/notification.service.js';
 
 const startWorker = () => {
@@ -14,6 +14,12 @@ const startWorker = () => {
       console.warn(`[Worker] Job ${jobId} not found in database.`);
       return;
     }
+
+    const workspaceId = dbJob.workspace.toString();
+    emitExecutionStarted(workspaceId, {
+      jobId: dbJob._id.toString(),
+      jobName: dbJob.name,
+    });
 
     const startTime = Date.now();
     let status = 'success';
@@ -92,7 +98,7 @@ const startWorker = () => {
     );
 
     // Emit real-time update
-    emitExecutionUpdate(dbJob.workspace.toString(), {
+    emitExecutionUpdate(workspaceId, {
       executionId: execution._id.toString(),
       jobId: dbJob._id.toString(),
       jobName: dbJob.name,

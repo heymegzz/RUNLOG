@@ -8,7 +8,7 @@ import { relativeTime } from '../../utils/time';
 
 const JobDetail = () => {
   const { id } = useParams();
-  const { liveExecutions } = useSocket();
+  const { liveExecutions, isJobPending } = useSocket();
   const { showToast } = useToast();
 
   const [job, setJob] = useState(null);
@@ -38,7 +38,7 @@ const JobDetail = () => {
   // Live update the job if we see an execution for it
   useEffect(() => {
     if (!job) return;
-    const latest = liveExecutions.find(ex => ex.jobId === id);
+    const latest = liveExecutions.find((ex) => String(ex.jobId) === String(id));
     if (latest) {
       setExecutions(prev => {
         if (prev.some(p => p._id === latest.executionId)) return prev; // Avoid dupe
@@ -66,20 +66,56 @@ const JobDetail = () => {
 
   useEffect(() => {
     if (!triggering) return;
-    const match = liveExecutions.find((ex) => ex.jobId === id);
+    const match = liveExecutions.find((ex) => String(ex.jobId) === String(id));
     if (match) setTriggering(false);
   }, [liveExecutions, id, triggering]);
 
+  const refreshExecutions = async () => {
+    const execRes = await execApi.getJobExecutions(id, { limit: 20 });
+    setExecutions(execRes.data.executions || []);
+    const jobRes = await jobsApi.getJob(id);
+    setJob(jobRes.data);
+  };
+
+  const pollUntilComplete = async (startedAt) => {
+    const deadline = Date.now() + 45000;
+    while (Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 2000));
+      try {
+        const execRes = await execApi.getJobExecutions(id, { limit: 5 });
+        const rows = execRes.data.executions || [];
+        const newest = rows[0];
+        if (newest && new Date(newest.executedAt).getTime() >= startedAt - 2000) {
+          await refreshExecutions();
+          setTriggering(false);
+          return;
+        }
+      } catch {
+        // keep polling
+      }
+    }
+    setTriggering(false);
+    try {
+      await refreshExecutions();
+    } catch {
+      // ignore
+    }
+  };
+
   const handleTrigger = async () => {
     setTriggering(true);
+    const startedAt = Date.now();
     try {
       await jobsApi.triggerJob(id);
-      showToast({ message: 'Job triggered — waiting for execution…', type: 'success' });
+      showToast({ message: 'Job triggered — waiting for result…', type: 'success' });
+      pollUntilComplete(startedAt);
     } catch (err) {
       setTriggering(false);
       showToast({ message: 'Trigger failed: ' + (err.message || err), type: 'error' });
     }
   };
+
+  const running = triggering || isJobPending(id);
 
   if (loading) return <div className="page-content flex-center"><div className="spinner"></div></div>;
   if (error) return <div className="page-content"><div className="alert alert-error">{error}</div></div>;
@@ -96,8 +132,8 @@ const JobDetail = () => {
           <p className="page-subtitle">{job.description || 'No description provided'}</p>
         </div>
         <div className="flex gap-sm">
-          <button className="btn btn-secondary" onClick={handleTrigger} disabled={triggering}>
-            {triggering ? (
+          <button className="btn btn-secondary" onClick={handleTrigger} disabled={running}>
+            {running ? (
               <>
                 <span className="spinner" style={{ width: 14, height: 14, marginRight: 6 }} />
                 Running…

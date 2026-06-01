@@ -32,10 +32,13 @@ export const initSocketIO = (httpServer) => {
 
     socket.on('join:workspace', async (workspaceId) => {
       try {
-        const isMember = await WorkspaceMember.exists({ user: socket.userId, workspace: workspaceId });
+        const wsId = String(workspaceId || '').trim();
+        if (!wsId) return;
+
+        const isMember = await WorkspaceMember.exists({ user: socket.userId, workspace: wsId });
         if (isMember) {
-          socket.join(`workspace:${workspaceId}`);
-          console.log(`📡 Socket ${socket.id} joined workspace:${workspaceId}`);
+          socket.join(`workspace:${wsId}`);
+          console.log(`📡 Socket ${socket.id} joined workspace:${wsId}`);
         } else {
           socket.emit('error', 'Not a member of this workspace');
         }
@@ -66,6 +69,24 @@ export const getIO = () => {
  * @param {string} workspaceId
  * @param {object} payload - { jobId, jobName, status, statusCode, durationMs, executedAt, executionId }
  */
+export const emitExecutionQueued = (workspaceId, payload) => {
+  try {
+    const ioInstance = getIO();
+    ioInstance.to(`workspace:${workspaceId}`).emit('execution:queued', payload);
+  } catch (err) {
+    console.warn('[Socket] Could not emit execution queued:', err.message);
+  }
+};
+
+export const emitExecutionStarted = (workspaceId, payload) => {
+  try {
+    const ioInstance = getIO();
+    ioInstance.to(`workspace:${workspaceId}`).emit('execution:started', payload);
+  } catch (err) {
+    console.warn('[Socket] Could not emit execution started:', err.message);
+  }
+};
+
 export const emitExecutionUpdate = (workspaceId, payload) => {
   try {
     const ioInstance = getIO();

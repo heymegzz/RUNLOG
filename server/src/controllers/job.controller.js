@@ -3,6 +3,7 @@ import Execution from '../models/Execution.js';
 import { success, error } from '../utils/apiResponse.js';
 import { parseCron } from '../utils/cronParse.js';
 import jobQueue from '../queues/jobQueue.js';
+import { emitExecutionQueued } from '../sockets/socketHandler.js';
 
 export const listJobs = async (req, res, next) => {
   try {
@@ -157,8 +158,12 @@ export const triggerJob = async (req, res, next) => {
     const job = await Job.findOne({ _id: req.params.id, workspace: req.workspace._id });
     if (!job) return error(res, 'NOT_FOUND', 'Job not found', 404);
 
-    // Manually add to Bull queue for immediate execution
-    await jobQueue.add({ jobId: job._id });
+    await jobQueue.add({ jobId: job._id.toString() });
+
+    emitExecutionQueued(req.workspace._id.toString(), {
+      jobId: job._id.toString(),
+      jobName: job.name,
+    });
 
     return success(res, { message: 'Job triggered successfully' });
   } catch (err) {

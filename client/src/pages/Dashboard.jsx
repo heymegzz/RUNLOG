@@ -10,7 +10,7 @@ import { IconPlus, IconArrowRight, IconRadio, IconJobs, IconActivity } from '../
 
 const Dashboard = () => {
   const { user } = useAuthStore();
-  const { liveExecutions } = useSocket();
+  const { liveExecutions, connected } = useSocket();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -31,6 +31,12 @@ const Dashboard = () => {
   useEffect(() => {
     fetchStats();
   }, []);
+
+  useEffect(() => {
+    if (liveExecutions.length > 0) {
+      fetchStats();
+    }
+  }, [liveExecutions.length]);
 
   if (loading) {
     return (
@@ -129,7 +135,10 @@ const Dashboard = () => {
             <div className="card">
               <div className="card-header">
                 <h3 className="card-title">Live executions</h3>
-                <IconRadio size={16} style={{ color: 'var(--green)' }} />
+                <span className="flex" style={{ gap: '0.35rem', alignItems: 'center', fontSize: '0.75rem', color: connected ? 'var(--green)' : 'var(--text-muted)' }}>
+                  <IconRadio size={16} />
+                  {connected ? 'Live' : 'Connecting…'}
+                </span>
               </div>
               <div className="live-feed execution-log">
                 {liveExecutions.length === 0 ? (
@@ -144,8 +153,8 @@ const Dashboard = () => {
                     </Link>
                   </div>
                 ) : (
-                  liveExecutions.map((exec, idx) => (
-                    <div key={idx} className="log-entry">
+                  liveExecutions.map((exec) => (
+                    <div key={exec.executionId || `${exec.jobId}-${exec.executedAt}`} className="log-entry">
                       <div className="log-job-name">{exec.jobName}</div>
                       <div className={`log-status ${exec.status}`}>{exec.status.toUpperCase()}</div>
                       <div className="log-duration">{exec.durationMs}ms</div>

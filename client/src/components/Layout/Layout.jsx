@@ -1,5 +1,6 @@
 import { Outlet, NavLink, useLocation, Navigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
+import { SocketProvider } from '../../context/SocketContext';
 import NotificationBell from '../NotificationBell/NotificationBell';
 import Toast from '../Toast/Toast';
 import Logo from '../Brand/Logo';
@@ -18,6 +19,7 @@ const Layout = () => {
     : '??';
 
   return (
+    <SocketProvider>
     <div className="layout app-layout">
       {/* Sidebar */}
       <aside className="sidebar">
@@ -102,6 +104,7 @@ const Layout = () => {
       </div>
       <Toast />
     </div>
+    </SocketProvider>
   );
 };
 
