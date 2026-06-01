@@ -7,6 +7,7 @@ import Workspace from '../src/models/Workspace.js';
 import WorkspaceMember from '../src/models/WorkspaceMember.js';
 import Job from '../src/models/Job.js';
 import Execution from '../src/models/Execution.js';
+import { seedDemoWorkspaceData } from '../src/utils/seedDemoData.js';
 
 dotenv.config();
 
@@ -49,79 +50,7 @@ const seed = async () => {
     user.activeWorkspace = workspace._id;
     await user.save();
 
-    // 3. Create Jobs
-    const jobTemplates = [
-      { name: 'Health Check', schedule: '*/5 * * * *', method: 'GET', url: 'https://httpstat.us/200', type: 'health' },
-      { name: 'Daily Report', schedule: '0 9 * * 1-5', method: 'POST', url: 'https://httpstat.us/200', type: 'daily' },
-      { name: 'DB Cleanup', schedule: '0 2 * * *', method: 'POST', url: 'https://httpstat.us/200', type: 'daily' },
-      { name: 'Cache Warmup', schedule: '*/15 * * * *', method: 'GET', url: 'https://httpstat.us/200', type: 'cache' },
-      { name: 'Failing Job', schedule: '*/10 * * * *', method: 'GET', url: 'https://httpstat.us/500', type: 'fail' }
-    ];
-
-    const createdJobs = [];
-
-    for (const t of jobTemplates) {
-      const job = new Job({
-        workspace: workspace._id,
-        createdBy: user._id,
-        name: t.name,
-        schedule: t.schedule,
-        callbackMethod: t.method,
-        callbackUrl: t.url,
-        status: 'active',
-        timeout: 10000,
-        retryCount: 3,
-        successCount: 0,
-        failureCount: 0
-      });
-      await job.save();
-      createdJobs.push({ job, type: t.type });
-    }
-
-    // 4. Create Executions
-    console.log('Generating executions over the last 7 days...');
-    
-    const now = Date.now();
-    const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
-    
-    for (let i = 0; i < 50; i++) {
-      const template = createdJobs[Math.floor(Math.random() * createdJobs.length)];
-      const randomPast = now - Math.floor(Math.random() * sevenDaysMs);
-      
-      let isSuccess = true;
-      if (template.type === 'fail') isSuccess = false;
-      else if (template.type === 'health' && Math.random() > 0.90) isSuccess = false;
-      else if (Math.random() > 0.98) isSuccess = false;
-
-      const status = isSuccess ? 'success' : 'failed';
-      const statusCode = isSuccess ? 200 : 500;
-      const durationMs = Math.floor(Math.random() * 500) + 50;
-
-      const execution = new Execution({
-        job: template.job._id,
-        workspace: workspace._id,
-        status,
-        statusCode,
-        executedAt: new Date(randomPast),
-        durationMs,
-        responsePayload: isSuccess ? 'OK' : 'Internal Server Error'
-      });
-      
-      await execution.save();
-      
-      if (isSuccess) template.job.successCount++;
-      else template.job.failureCount++;
-      
-      if (!template.job.lastRunAt || randomPast > template.job.lastRunAt.getTime()) {
-        template.job.lastRunAt = new Date(randomPast);
-        template.job.lastRunStatus = status;
-      }
-    }
-
-    // Update job aggregates
-    for (const { job } of createdJobs) {
-      await job.save();
-    }
+    await seedDemoWorkspaceData(workspace._id, user._id);
 
     console.log('✅ Demo seed complete!');
     console.log('Login: demo@runlog.dev / demo123');
