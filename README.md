@@ -10,13 +10,13 @@ Distributed job scheduling platform: cron-driven HTTP callbacks, Bull queue exec
 |-------|------|
 | Frontend | React 19, Vite 8, Zustand, Socket.io client |
 | Backend | Node 20.19+, Express, MongoDB, Redis, Bull |
-| Infra | Docker Compose (Mongo, Redis, API, static client) |
+| Hosting | Vercel (UI) · Render (API) · Atlas (Mongo) · Upstash (Redis) |
 
 ## Prerequisites
 
 - **Node.js** `>=20.19.0` (required by Vite 8)
-- **MongoDB** and **Redis** (local or managed)
-- For Docker: Docker Engine + Compose v2
+- **MongoDB** — local install or [Atlas](https://www.mongodb.com/atlas)
+- **Redis** — local install or [Upstash](https://upstash.com) (required for the job queue)
 
 ## Local development
 
@@ -33,6 +33,9 @@ npm run dev
 
 API listens on **http://localhost:5005**.
 
+Local MongoDB: `mongodb://127.0.0.1:27017/runlog`  
+Local Redis: `redis://127.0.0.1:6379`
+
 ### 2. Frontend
 
 ```bash
@@ -41,48 +44,12 @@ npm install
 npm run dev
 ```
 
-Open **http://localhost:5173**. Vite proxies `/api` and does not require `VITE_API_URL` for local dev.
+Open **http://localhost:5173**. Vite proxies `/api` to the backend — leave `VITE_API_URL` unset locally.
 
 ### 3. Health check
 
 ```bash
 curl http://localhost:5005/api/health
-```
-
-## Docker Compose (recommended for demos / VPS)
-
-### 1. Configure secrets
-
-```bash
-cp .env.example .env
-# Set JWT_SECRET and REFRESH_TOKEN_SECRET to long random strings
-```
-
-### 2. Build and run
-
-```bash
-docker compose up --build -d
-```
-
-| Service | URL |
-|---------|-----|
-| App (UI + proxied API) | http://localhost:8080 |
-| API direct (debug) | http://localhost:5005 |
-
-### 3. Seed demo data (first time)
-
-```bash
-docker compose exec server node scripts/seed.js
-```
-
-Login: `demo@runlog.dev` / `demo123`
-
-### 4. Logs & teardown
-
-```bash
-docker compose logs -f server
-docker compose down          # keep volumes
-docker compose down -v       # wipe Mongo/Redis data
 ```
 
 ## Production (Vercel + Render)
@@ -129,10 +96,6 @@ curl https://YOUR-SERVICE.onrender.com/api/health
 
 Seed (Render shell): `node scripts/seed.js` → `demo@runlog.dev` / `demo123`
 
-### Docker (optional, one VPS)
-
-Use `docker compose up --build -d` — see [Docker Compose](#docker-compose-recommended-for-demos--vps) above.
-
 ## Environment variables
 
 ### Server (`server/.env`)
@@ -144,14 +107,14 @@ Use `docker compose up --build -d` — see [Docker Compose](#docker-compose-reco
 | `REDIS_URL` | Yes | Upstash **Redis** URL (`rediss://...`) for Bull — not the REST API URL |
 | `REFRESH_TOKEN_SECRET` | No* | Refresh tokens (*falls back to `JWT_SECRET`) |
 | `CLIENT_URL` | Yes (prod) | Frontend origin for CORS |
-| `PORT` | No | Default `5005` |
+| `PORT` | No | Default `5005` (Render sets `PORT` automatically) |
 | `SMTP_*` | No | Email alerts on job failure |
 
 ### Client (build-time)
 
 | Variable | Description |
 |----------|-------------|
-| `VITE_API_URL` | API base path. Use `/api` when nginx proxies to the server; use full URL when API is on another domain |
+| `VITE_API_URL` | Full API URL in production, e.g. `https://your-api.onrender.com/api` |
 
 ## Ops scripts
 
@@ -166,21 +129,19 @@ node scripts/updateDemoJobs.js # force missing nextRunAt for active jobs
 
 - [ ] `JWT_SECRET` and `REFRESH_TOKEN_SECRET` are strong and not committed
 - [ ] `CLIENT_URL` matches production frontend URL
-- [ ] MongoDB and Redis are backed up / managed
+- [ ] MongoDB and Redis are reachable from Render
 - [ ] `npm run build` succeeds in `client/` on Node 20.19+
 - [ ] `curl /api/health` returns `ok` after deploy
 - [ ] Demo seed only in non-production environments
-- [ ] TLS terminated at reverse proxy for public traffic
 
 ## Project layout
 
 ```
 RUNLOG/
-├── client/          React SPA
-├── server/          Express API + scheduler + worker
-├── docker-compose.yml
-├── .github/workflows/ci.yml
-└── README.md
+├── client/          React SPA (Vercel)
+├── server/          Node API + scheduler + worker (Render)
+├── render.yaml      Optional Render blueprint
+└── .github/workflows/ci.yml
 ```
 
 ## License
