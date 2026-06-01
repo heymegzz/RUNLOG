@@ -1,7 +1,7 @@
-# Render Blueprint — optional. Dashboard setup: see RENDER_BACKEND.md
+# Render Blueprint — optional
 services:
   - type: web
-    name: runlog-api
+    name: runlog-1
     runtime: node
     rootDir: server
     buildCommand: npm install

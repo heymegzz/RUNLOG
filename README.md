@@ -2,7 +2,7 @@
 
 Distributed job scheduling platform: cron-driven HTTP callbacks, Bull queue execution, real-time execution feed (Socket.io), and workspace-based multi-tenancy.
 
-**Live app:** [https://runlog-eta.vercel.app](https://runlog-eta.vercel.app)
+**Web app:** [https://runlog-eta.vercel.app](https://runlog-eta.vercel.app) · **API:** [https://runlog-1.onrender.com](https://runlog-1.onrender.com)
 
 ## Stack
 
@@ -57,7 +57,7 @@ curl http://localhost:5005/api/health
 | Piece | Host |
 |-------|------|
 | Frontend | [https://runlog-eta.vercel.app](https://runlog-eta.vercel.app) (Vercel, root `client/`) |
-| API | Render (root `server/`) |
+| API | [Render](https://runlog-1.onrender.com) (root `server/`) |
 | MongoDB | [Atlas](https://www.mongodb.com/atlas) |
 | Redis | [Upstash](https://upstash.com) — required for Bull job queue |
 
@@ -86,12 +86,21 @@ Do not set `PORT` manually on Render.
 
 ### Vercel — after Render is live
 
-Set `VITE_API_URL=https://YOUR-SERVICE.onrender.com/api` and **redeploy** the frontend.
+Set on Vercel:
+
+```text
+VITE_API_URL=https://runlog-1.onrender.com/api
+```
+
+Then **redeploy** the frontend (required after env changes).
+
+> **Note:** [https://runlog-1.onrender.com](https://runlog-1.onrender.com) is the **API only**, not the React UI. Use [https://runlog-eta.vercel.app](https://runlog-eta.vercel.app) for the app. Visiting the API root returns JSON (not the dashboard).
 
 ### Verify
 
 ```bash
-curl https://YOUR-SERVICE.onrender.com/api/health
+curl https://runlog-1.onrender.com/api/health
+curl https://runlog-1.onrender.com/
 ```
 
 Seed (Render shell): `node scripts/seed.js` → `demo@runlog.dev` / `demo123`
@@ -114,7 +123,7 @@ Seed (Render shell): `node scripts/seed.js` → `demo@runlog.dev` / `demo123`
 
 | Variable | Description |
 |----------|-------------|
-| `VITE_API_URL` | Full API URL in production, e.g. `https://your-api.onrender.com/api` |
+| `VITE_API_URL` | `https://runlog-1.onrender.com/api` |
 
 ## Ops scripts
 

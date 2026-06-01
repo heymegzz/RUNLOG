@@ -15,7 +15,7 @@ import { createServer } from 'http';
 import rateLimit from 'express-rate-limit';
 
 import connectDB from './src/config/db.js';
-import { corsOrigin } from './src/config/cors.js';
+import { corsOrigin, PRODUCTION_FRONTEND_URL, PRODUCTION_API_URL } from './src/config/cors.js';
 import { initSocketIO } from './src/sockets/socketHandler.js';
 
 const app = express();
@@ -34,6 +34,18 @@ app.use(helmet());
 app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// --------------- Root (API only — UI is on Vercel) ---------------
+app.get('/', (_req, res) => {
+  res.json({
+    service: 'RunLog API',
+    status: 'running',
+    message: 'This is the backend. Open the web app for the UI.',
+    frontend: PRODUCTION_FRONTEND_URL,
+    health: `${PRODUCTION_API_URL}/api/health`,
+    apiBase: `${PRODUCTION_API_URL}/api`,
+  });
+});
 
 // --------------- Health Check ---------------
 app.get('/api/health', (_req, res) => {
