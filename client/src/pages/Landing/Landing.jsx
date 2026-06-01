@@ -1,380 +1,289 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
+import { Terminal, Activity, Zap, Shield, Globe, Clock } from 'lucide-react';
 import './landing.css';
 
-/* ── Fake execution log data that loops ── */
-const LOG_ROWS = [
-  { time: '09:00:01', name: 'send-digest',       status: '200 OK',   dur: '142ms', type: 'ok',   icon: '✓' },
-  { time: '09:00:03', name: 'sync-inventory',     status: '200 OK',   dur: '89ms',  type: 'ok',   icon: '✓' },
-  { time: '09:01:00', name: 'process-payments',   status: '503 ERR',  dur: '—',     type: 'warn', icon: '↻ retry 1/3' },
-  { time: '09:01:05', name: 'process-payments',   status: '200 OK',   dur: '312ms', type: 'ok',   icon: '✓' },
-  { time: '09:02:00', name: 'purge-cache',        status: '200 OK',   dur: '44ms',  type: 'ok',   icon: '✓' },
-  { time: '09:03:00', name: 'send-digest',        status: 'timeout',  dur: '—',     type: 'err',  icon: '✗ alerted' },
-  { time: '09:04:00', name: 'health-check',       status: '200 OK',   dur: '18ms',  type: 'ok',   icon: '✓' },
-  { time: '09:05:00', name: 'sync-orders',        status: '200 OK',   dur: '203ms', type: 'ok',   icon: '✓' },
-];
-
-/* ── Scroll-reveal observer ── */
-function useReveal() {
-  const ref = useRef(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) el.classList.add('visible'); },
-      { threshold: 0.15 }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-  return ref;
-}
-
-/* ── Animated Terminal ── */
-const Terminal = () => {
-  const [visibleRows, setVisibleRows] = useState([]);
-  const indexRef = useRef(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const nextRow = LOG_ROWS[indexRef.current % LOG_ROWS.length];
-      setVisibleRows(prev => {
-        const updated = [...prev, { ...nextRow, key: Date.now() }];
-        return updated.slice(-7);
-      });
-      indexRef.current++;
-    }, 1800);
-    // Kick off immediately
-    const firstRow = LOG_ROWS[0];
-    setVisibleRows([{ ...firstRow, key: Date.now() }]);
-    indexRef.current = 1;
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div className="land-terminal">
-      <div className="land-terminal-bar">
-        <div className="land-terminal-dots">
-          <span /><span /><span />
-        </div>
-        <div className="land-terminal-title">execution_log — workspace: acme-corp</div>
-      </div>
-      <div className="land-terminal-body">
-        {visibleRows.map((row, i) => (
-          <div
-            key={row.key}
-            className="land-log-row"
-            style={{ animationDelay: `${i * 40}ms` }}
-          >
-            <div><div className={`land-log-dot ${row.type}`} /></div>
-            <div className="land-log-time">{row.time}</div>
-            <div className="land-log-name">{row.name}</div>
-            <div className={`land-log-status ${row.type}`}>{row.status}</div>
-            <div className="land-log-dur">{row.dur}</div>
-            <div className={`land-log-icon ${row.type}`}>{row.icon.charAt(0)}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-/* ── FEATURES DATA ── */
-const FEATURES = [
-  { icon: '↻', title: 'Retry Engine', desc: 'Exponential backoff, configurable attempts. Failures recover themselves.' },
-  { icon: '◉', title: 'Live Execution Feed', desc: 'WebSocket-powered. See every job fire in real time, no refresh.' },
-  { icon: '⚡', title: 'Failure Alerts', desc: 'Email and Slack. Know before your users do.' },
-  { icon: '⊞', title: 'Team RBAC', desc: 'Owners, Admins, Developers. One workspace, right access for everyone.' },
-  { icon: '⌗', title: 'API Key Auth', desc: 'Trigger jobs programmatically from CI pipelines or scripts.' },
-  { icon: '▤', title: 'Execution History', desc: 'Full log, paginated, filterable by status. Every run, forever.' },
-];
-
-/* ── PREVIEW TABLE DATA ── */
-const PREVIEW_ROWS = [
-  { name: 'send-digest',     status: 'ok',   time: '2m ago',  dur: '142ms' },
-  { name: 'sync-inventory',  status: 'ok',   time: '3m ago',  dur: '89ms' },
-  { name: 'process-payments', status: 'warn', time: '4m ago',  dur: '312ms' },
-  { name: 'purge-cache',     status: 'ok',   time: '5m ago',  dur: '44ms' },
-  { name: 'send-digest',     status: 'err',  time: '8m ago',  dur: '—' },
+/* ═══════════════════════════════════════════════════════════
+   DATA & CONFIG
+   ═══════════════════════════════════════════════════════════ */
+const LOGS = [
+  { name: 'send-digest', status: 'ok', dur: '142ms' },
+  { name: 'sync-inventory', status: 'ok', dur: '89ms' },
+  { name: 'process-payments', status: 'retry', dur: 'timeout' },
+  { name: 'process-payments', status: 'ok', dur: '312ms' },
+  { name: 'purge-cache', status: 'ok', dur: '44ms' },
 ];
 
 /* ═══════════════════════════════════════════════════════════
-   LANDING PAGE COMPONENT
+   COMPONENTS
    ═══════════════════════════════════════════════════════════ */
-const Landing = () => {
-  const r1 = useReveal();
-  const r2 = useReveal();
-  const r3 = useReveal();
-  const r4 = useReveal();
-  const r5 = useReveal();
+
+const HeroWidget = () => {
+  const [logs, setLogs] = useState([]);
+  const idx = useRef(0);
+
+  useEffect(() => {
+    const iv = setInterval(() => {
+      const nextLog = { ...LOGS[idx.current % LOGS.length], id: Date.now() };
+      setLogs(prev => [nextLog, ...prev].slice(0, 5));
+      idx.current++;
+    }, 1200);
+    return () => clearInterval(iv);
+  }, []);
 
   return (
-    <div style={{ background: 'var(--bg-base)', minHeight: '100vh' }}>
-      {/* ── NAV ── */}
-      <nav className="land-nav">
-        <Link to="/" className="land-nav-logo">
-          <div className="land-nav-dot" />
-          <span className="land-nav-wordmark">Runlog</span>
+    <motion.div 
+      className="ln-hero-widget-wrapper"
+      initial={{ rotateX: 20, y: 100, opacity: 0 }}
+      animate={{ rotateX: 0, y: 0, opacity: 1 }}
+      transition={{ type: "spring", stiffness: 40, damping: 20, delay: 0.2 }}
+    >
+      <div className="ln-widget-mac">
+        <div className="ln-widget-mac-header">
+          <div className="ln-widget-mac-dot r" />
+          <div className="ln-widget-mac-dot y" />
+          <div className="ln-widget-mac-dot g" />
+          <div className="ln-widget-mac-title">runlog-dashboard — bash — 80x24</div>
+        </div>
+        <div className="ln-widget-mac-body">
+          <div className="ln-widget-sidebar">
+            <div className="ln-widget-nav">
+              <div className="ln-widget-nav-item active"><Activity size={16} /> Overview</div>
+              <div className="ln-widget-nav-item"><Terminal size={16} /> Executions</div>
+              <div className="ln-widget-nav-item"><Zap size={16} /> Triggers</div>
+            </div>
+          </div>
+          <div className="ln-widget-main">
+            <div className="ln-widget-stats">
+              <div className="ln-widget-stat-box">
+                <div className="ln-widget-stat-val">12,492</div>
+                <div className="ln-widget-stat-label">Runs Today</div>
+              </div>
+              <div className="ln-widget-stat-box">
+                <div className="ln-widget-stat-val accent">99.8%</div>
+                <div className="ln-widget-stat-label">Success Rate</div>
+              </div>
+              <div className="ln-widget-stat-box">
+                <div className="ln-widget-stat-val">143ms</div>
+                <div className="ln-widget-stat-label">Avg Duration</div>
+              </div>
+            </div>
+            
+            <table className="ln-widget-table">
+              <thead>
+                <tr>
+                  <th>Job Name</th>
+                  <th>Status</th>
+                  <th>Duration</th>
+                </tr>
+              </thead>
+              <tbody>
+                <AnimatePresence>
+                  {logs.map((log) => (
+                    <motion.tr 
+                      key={log.id}
+                      initial={{ opacity: 0, x: -20, backgroundColor: 'rgba(0,229,89,0.1)' }}
+                      animate={{ opacity: 1, x: 0, backgroundColor: 'rgba(0,229,89,0)' }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.4 }}
+                    >
+                      <td>
+                        <div className="ln-job-name">
+                          <span className={`ln-job-dot ${log.status === 'ok' ? 'g' : 'o'}`} />
+                          {log.name}
+                        </div>
+                      </td>
+                      <td><span className={`ln-badge ${log.status}`}>{log.status === 'ok' ? '200 OK' : 'RETRYING'}</span></td>
+                      <td style={{ fontFamily: 'var(--font-mono)' }}>{log.dur}</td>
+                    </motion.tr>
+                  ))}
+                </AnimatePresence>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+export default function Landing() {
+  const { scrollYProgress } = useScroll();
+  const y = useTransform(scrollYProgress, [0, 1], [0, -100]);
+
+  return (
+    <div className="landing-page">
+      <div className="ln-noise" />
+
+      {/* NAVBAR */}
+      <nav className="ln-nav">
+        <Link to="/" className="ln-nav-logo">
+          <div className="ln-nav-logo-mark" />
+          <span className="ln-nav-logo-text">runlog</span>
         </Link>
-        <div className="land-nav-links">
-          <a href="#features" className="land-nav-link">Features</a>
-          <a href="#pricing" className="land-nav-link">Pricing</a>
-          <Link to="/login" className="land-nav-link">Sign in</Link>
-          <Link to="/register" className="land-nav-cta">Start for free →</Link>
+        <div className="ln-nav-links">
+          <a href="#features" className="ln-nav-link">Features</a>
+          <a href="#pricing" className="ln-nav-link">Pricing</a>
+          <Link to="/login" className="ln-nav-link">Login</Link>
+          <Link to="/register" className="ln-btn primary">Start Free</Link>
         </div>
       </nav>
 
-      {/* ── HERO ── */}
-      <section className="land-hero">
-        <div className="land-hero-left">
-          <div className="land-hero-overline">Scheduled jobs. Real-time logs.</div>
-          <h1 className="land-hero-headline">
-            Your cron jobs,<br />
-            finally <em>visible.</em>
-          </h1>
-          <p className="land-hero-sub">
-            Register HTTP callbacks, set a schedule, and watch every execution in
-            real time — with retries, alerts, and team access.
-          </p>
-          <div className="land-hero-ctas">
-            <Link to="/register" className="btn btn-primary">Deploy your first job →</Link>
-            <a href="#how-it-works" className="btn btn-secondary">See how it works</a>
-          </div>
-          <div className="land-hero-proof">
-            <div className="land-hero-avatars">
-              <div className="land-hero-avatar a1">JK</div>
-              <div className="land-hero-avatar a2">AM</div>
-              <div className="land-hero-avatar a3">SL</div>
-              <div className="land-hero-avatar a4">RD</div>
-            </div>
-            <span className="land-hero-proof-text">Trusted by 400+ engineering teams</span>
-          </div>
+      {/* HERO */}
+      <section className="ln-hero">
+        <div className="ln-hero-container">
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="ln-hero-badge"
+          >
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10100f' }} />
+            System Operational
+          </motion.div>
+          
+          <motion.h1 
+            className="ln-hero-headline"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          >
+            Who's watching your <br />
+            <span className="highlight">background jobs?</span>
+          </motion.h1>
+          
+          <motion.p 
+            className="ln-hero-sub"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+          >
+            Runlog is the ops dashboard for everything your backend does automatically. 
+            Schedule jobs, handle retries, and get real-time alerts. Stop reading log files at 2am.
+          </motion.p>
+          
+          <motion.div 
+            className="ln-hero-ctas"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            <Link to="/register" className="ln-btn primary" style={{ fontSize: '1.1rem', padding: '1rem 2rem' }}>Deploy your first job</Link>
+            <a href="#features" className="ln-btn" style={{ fontSize: '1.1rem', padding: '1rem 2rem' }}>See how it works</a>
+          </motion.div>
         </div>
-        <div className="land-hero-right">
-          <Terminal />
-        </div>
+
+        <HeroWidget />
       </section>
 
-      {/* ── HOW IT WORKS ── */}
-      <section id="how-it-works" className="land-section" ref={r1}>
-        <div className="fade-up" ref={r1}>
-          <div className="land-section-label">How it works</div>
-          <h2 className="land-section-title">Three steps. No infrastructure to manage.</h2>
-          <div className="land-steps" style={{ marginTop: '2.5rem' }}>
-            <div className="land-step">
-              <div className="land-step-number">01</div>
-              <div className="land-step-title">Register</div>
-              <div className="land-step-text">
-                Point Runlog at any HTTP endpoint. Add a cron schedule, set your
-                retry policy, attach headers or a payload. Done in 60 seconds.
-              </div>
-            </div>
-            <div className="land-step">
-              <div className="land-step-number">02</div>
-              <div className="land-step-title">Schedule</div>
-              <div className="land-step-text">
-                Runlog's worker engine fires your job on time, every time. Failures
-                retry automatically with exponential backoff. You don't babysit it.
-              </div>
-            </div>
-            <div className="land-step">
-              <div className="land-step-number">03</div>
-              <div className="land-step-title">Watch</div>
-              <div className="land-step-text">
-                Every execution streams to your dashboard in real time. Status codes,
-                durations, response snapshots — full history, always searchable.
-              </div>
-            </div>
-          </div>
+      {/* MARQUEE */}
+      <div className="ln-marquee">
+        <div className="ln-marquee-inner">
+          {Array(8).fill("Built for Engineers").map((text, i) => (
+            <div key={i} className="ln-marquee-item">{text}</div>
+          ))}
         </div>
-      </section>
+      </div>
 
-      {/* ── FEATURES ── */}
-      <section id="features" className="land-section" style={{ paddingTop: '2rem' }}>
-        <div className="fade-up" ref={r2}>
-          <div className="land-section-label">Features</div>
-          <h2 className="land-section-title">Everything a production job needs</h2>
-          <div className="land-features" style={{ marginTop: '2.5rem' }}>
-            {FEATURES.map(f => (
-              <div key={f.title} className="land-feature">
-                <div className="land-feature-icon">
-                  <span style={{ fontSize: '1rem' }}>{f.icon}</span>
-                </div>
-                <div className="land-feature-title">{f.title}</div>
-                <div className="land-feature-desc">{f.desc}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* FEATURES */}
+      <section id="features" className="ln-section">
+        <div className="ln-section-label">Features</div>
+        <h2 className="ln-section-title">Everything a production <br/>scheduler needs.</h2>
+        <p className="ln-section-p">
+          We built Runlog because we were tired of patching together Redis queues, 
+          cron syntax, and Slack webhooks just to run a daily database backup.
+        </p>
 
-      {/* ── DASHBOARD PREVIEW ── */}
-      <section className="land-preview-section">
-        <div className="fade-up" ref={r3}>
-          <div className="land-section-label" style={{ textAlign: 'center' }}>Preview</div>
-          <h2 className="land-section-title" style={{ textAlign: 'center', margin: '0 auto 2.5rem', maxWidth: '500px' }}>
-            The dashboard your on-call rotation deserves
-          </h2>
-          <div className="land-preview-card">
-            <div className="land-preview-inner">
-              <div className="land-preview-sidebar">
-                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'var(--green)' }} />
-                  acme-corp
-                </div>
-                <div className="land-preview-nav-item active">Dashboard</div>
-                <div className="land-preview-nav-item">Jobs</div>
-                <div className="land-preview-nav-item">Executions</div>
-                <div className="land-preview-nav-item">Settings</div>
-              </div>
-              <div className="land-preview-main">
-                <div className="land-preview-stats">
-                  <div className="land-preview-stat">
-                    <div className="land-preview-stat-val">1,204</div>
-                    <div className="land-preview-stat-label">Runs today</div>
-                  </div>
-                  <div className="land-preview-stat">
-                    <div className="land-preview-stat-val" style={{ color: 'var(--green)' }}>98.2%</div>
-                    <div className="land-preview-stat-label">Success</div>
-                  </div>
-                  <div className="land-preview-stat">
-                    <div className="land-preview-stat-val">143ms</div>
-                    <div className="land-preview-stat-label">Avg duration</div>
-                  </div>
-                  <div className="land-preview-stat">
-                    <div className="land-preview-stat-val" style={{ color: 'var(--red)' }}>2</div>
-                    <div className="land-preview-stat-label">Alerts</div>
-                  </div>
-                </div>
-                <table className="land-preview-table">
-                  <thead><tr><th>Job</th><th>Status</th><th>Duration</th><th>Time</th></tr></thead>
-                  <tbody>
-                    {PREVIEW_ROWS.map((r, i) => (
-                      <tr key={i}>
-                        <td style={{ color: 'var(--text-primary)' }}>{r.name}</td>
-                        <td>
-                          <span className={`land-preview-badge ${r.status}`}>
-                            {r.status === 'ok' ? '200 OK' : r.status === 'warn' ? 'RETRY' : 'FAILED'}
-                          </span>
-                        </td>
-                        <td>{r.dur}</td>
-                        <td>{r.time}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
+        <div className="ln-feature-grid">
+          {[
+            { icon: <Clock size={28} />, title: "Retry Engine", desc: "Exponential backoff with configurable attempts. Failures recover themselves automatically." },
+            { icon: <Activity size={28} />, title: "Live Feed", desc: "WebSocket-powered dashboard. Every job result hits your screen in under 200ms." },
+            { icon: <Zap size={28} />, title: "Failure Alerts", desc: "Native Slack, PagerDuty, and Email webhooks on final failure. Know before your users do." },
+            { icon: <Shield size={28} />, title: "Team RBAC", desc: "Owner, Admin, and Developer roles. One workspace, exact access for every teammate.", v: true },
+            { icon: <Terminal size={28} />, title: "API Key Auth", desc: "Trigger jobs programmatically. Wire Runlog directly into your CI pipelines and custom scripts." },
+            { icon: <Globe size={28} />, title: "Full History", desc: "Every execution logged. Paginate, filter by status, and search by name. Stored securely." }
+          ].map((f, i) => (
+            <motion.div 
+              key={i}
+              className={`ln-fcard ${f.v ? 'v' : ''}`}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.5, delay: i * 0.1 }}
+            >
+              <div className="ln-fcard-icon">{f.icon}</div>
+              <div className="ln-fcard-title">{f.title}</div>
+              <div className="ln-fcard-desc">{f.desc}</div>
+            </motion.div>
+          ))}
         </div>
       </section>
 
-      {/* ── PRICING ── */}
-      <section id="pricing" className="land-section">
-        <div className="fade-up" ref={r4}>
-          <div className="land-section-label" style={{ textAlign: 'center' }}>Pricing</div>
-          <h2 className="land-section-title" style={{ textAlign: 'center', margin: '0 auto 2.5rem' }}>Simple, honest pricing</h2>
-          <div className="land-pricing">
-            <div className="land-price-card">
-              <div className="land-price-name">Free</div>
-              <div className="land-price-amount">$0</div>
-              <div className="land-price-period">forever for small projects</div>
-              <ul className="land-price-features">
-                <li>5 scheduled jobs</li>
-                <li>1 workspace</li>
-                <li>7-day execution history</li>
-                <li>Community support</li>
-              </ul>
-              <Link to="/register" className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center' }}>Get started</Link>
-            </div>
-            <div className="land-price-card featured">
-              <div className="land-price-name" style={{ color: 'var(--green)' }}>Pro</div>
-              <div className="land-price-amount">$19</div>
-              <div className="land-price-period">per month</div>
-              <ul className="land-price-features">
-                <li>Unlimited jobs</li>
-                <li>3 workspaces</li>
-                <li>90-day history</li>
-                <li>Slack &amp; email alerts</li>
-                <li>API key access</li>
-              </ul>
-              <Link to="/register" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>Start free trial →</Link>
-            </div>
-            <div className="land-price-card">
-              <div className="land-price-name">Team</div>
-              <div className="land-price-amount">$59</div>
-              <div className="land-price-period">per month</div>
-              <ul className="land-price-features">
-                <li>Everything in Pro</li>
-                <li>Full RBAC</li>
-                <li>5 workspaces</li>
-                <li>1-year history</li>
-                <li>Priority support</li>
-              </ul>
-              <Link to="/register" className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center' }}>Contact us</Link>
-            </div>
-          </div>
+      {/* SOCIAL PROOF */}
+      <section className="ln-proof">
+        <motion.h2 
+          className="ln-proof-title"
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
+          Trusted by teams who <br/>ship fast.
+        </motion.h2>
+        <div className="ln-testimonial-grid">
+          {[
+            { quote: "We had 14 different cron setups across 4 services. Runlog unified them in a weekend. Now one dashboard shows us everything.", author: "Staff Engineer · Series B Fintech" },
+            { quote: "The retry logic alone caught 3 incidents before they hit production. The Slack alerts are the first thing we open in the morning.", author: "Backend Lead · DevTools Startup" },
+            { quote: "We wire every background task through Runlog now. It's the ops layer we always wished someone would just build.", author: "CTO · 12-person SaaS" }
+          ].map((t, i) => (
+            <motion.div 
+              key={i} className="ln-testi"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: i * 0.15 }}
+            >
+              <div className="ln-testi-text">"{t.quote}"</div>
+              <div className="ln-testi-author">{t.author}</div>
+            </motion.div>
+          ))}
         </div>
       </section>
 
-      {/* ── TESTIMONIALS ── */}
-      <section className="land-section" style={{ paddingTop: '2rem' }}>
-        <div className="fade-up" ref={r5}>
-          <div className="land-section-label" style={{ textAlign: 'center' }}>From the field</div>
-          <h2 className="land-section-title" style={{ textAlign: 'center', margin: '0 auto 2.5rem' }}>Engineers ship with Runlog</h2>
-          <div className="land-testimonials">
-            <div className="land-testimonial">
-              <div className="land-testimonial-text">
-                "We replaced a mess of Heroku Scheduler jobs and three different cron
-                containers with Runlog. One dashboard, every team."
-              </div>
-              <div className="land-testimonial-author">Jamie Kowalski</div>
-              <div className="land-testimonial-role">Staff Engineer, Meridian</div>
-            </div>
-            <div className="land-testimonial">
-              <div className="land-testimonial-text">
-                "The retry logic alone saved us three incidents. The failure alerts
-                are the first thing we look at now."
-              </div>
-              <div className="land-testimonial-author">Priya Sharma</div>
-              <div className="land-testimonial-role">SRE Lead, Canopy Health</div>
-            </div>
-            <div className="land-testimonial">
-              <div className="land-testimonial-text">
-                "We wire every background task through Runlog. It's the ops layer
-                we always wished someone else would build."
-              </div>
-              <div className="land-testimonial-author">Marcus Chen</div>
-              <div className="land-testimonial-role">CTO, Stackline</div>
-            </div>
+      {/* BIG FINAL CTA */}
+      <section className="ln-cta-section">
+        <motion.h2 
+          className="ln-cta-title"
+          style={{ y }}
+        >
+          Ship your <span className="skew">first job</span><br/> in 5 minutes.
+        </motion.h2>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <Link to="/register" className="ln-btn primary" style={{ fontSize: '1.25rem', padding: '1.2rem 3rem' }}>Get Started Free</Link>
+        </motion.div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="ln-footer">
+        <div className="ln-footer-inner">
+          <div className="ln-footer-left">
+            <div className="ln-nav-logo-mark" style={{ width: 20, height: 20 }} />
+            <span className="ln-footer-brand">runlog</span>
           </div>
-        </div>
-      </section>
-
-      {/* ── FOOTER CTA ── */}
-      <section className="land-footer-cta">
-        <h2 className="land-footer-cta-title">Ship your first scheduled job in 5 minutes.</h2>
-        <p className="land-footer-cta-sub">Free forever for small teams. No credit card.</p>
-        <Link to="/register" className="btn btn-primary" style={{ fontSize: '1rem', padding: '0.7rem 2rem' }}>
-          Get started free →
-        </Link>
-      </section>
-
-      {/* ── FOOTER ── */}
-      <footer className="land-footer">
-        <div className="land-footer-copy">© 2025 Runlog</div>
-        <div className="land-footer-links">
-          <a href="#" className="land-footer-link">Privacy</a>
-          <a href="#" className="land-footer-link">Terms</a>
-          <a href="#" className="land-footer-link">Docs</a>
-          <a href="#" className="land-footer-link land-footer-status">
-            <span className="land-footer-status-dot" />
-            Status
-          </a>
+          <div className="ln-footer-links">
+            <a href="#">Product</a>
+            <a href="#">Documentation</a>
+            <a href="#">Pricing</a>
+            <a href="#">Terms</a>
+          </div>
         </div>
       </footer>
     </div>
   );
-};
-
-export default Landing;
+}
