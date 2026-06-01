@@ -907,7 +907,7 @@ function FinalCTA() {
 
 export default function Landing() {
   const navigate = useNavigate();
-  const { login } = useAuthStore();
+  const { login, isLoading, error } = useAuthStore();
   const handleDemoLogin = async (e) => {
     e.preventDefault();
     const success = await login({ email: 'demo@runlog.dev', password: 'demo123' });
@@ -954,9 +954,22 @@ export default function Landing() {
             <p className="hero-desc">
               Register HTTP endpoints as cron jobs. Set schedules, stream execution logs in real time, and get retries, failure alerts, and team access — without another worker process.
             </p>
+            {error && (
+              <div className="auth-alert auth-alert-error" style={{ marginBottom: '1rem' }}>
+                {error}
+              </div>
+            )}
             <div className="hero-actions">
               <Link to="/register" className="btn-primary">Get started</Link>
-              <button type="button" onClick={handleDemoLogin} className="btn-secondary" style={{ cursor: 'pointer' }}>Try demo</button>
+              <button
+                type="button"
+                onClick={handleDemoLogin}
+                className="btn-secondary"
+                disabled={isLoading}
+                style={{ cursor: isLoading ? 'wait' : 'pointer' }}
+              >
+                {isLoading ? 'Signing in…' : 'Try demo'}
+              </button>
             </div>
           </div>
           <div ref={heroPanelRef} className="hero-panel reveal-hidden reveal-delay-1">

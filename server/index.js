@@ -15,6 +15,7 @@ import { createServer } from 'http';
 import rateLimit from 'express-rate-limit';
 
 import connectDB from './src/config/db.js';
+import { ensureDemoUser } from './src/utils/ensureDemoUser.js';
 import { corsOrigin, PRODUCTION_FRONTEND_URL, PRODUCTION_API_URL } from './src/config/cors.js';
 import { initSocketIO } from './src/sockets/socketHandler.js';
 
@@ -80,6 +81,10 @@ import { waitForJobQueue } from './src/config/redis.js';
 
 const start = async () => {
   await connectDB();
+
+  if (process.env.ENSURE_DEMO_USER !== 'false') {
+    await ensureDemoUser();
+  }
 
   try {
     await waitForJobQueue();

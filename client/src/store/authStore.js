@@ -24,14 +24,15 @@ export const useAuthStore = create((set) => ({
     try {
       const response = await authApi.login(credentials);
       const { user, accessToken, refreshToken } = response.data;
+      const workspaceId = user.activeWorkspace?._id ?? user.activeWorkspace;
 
       localStorage.setItem('token', accessToken);
       if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
-      localStorage.setItem('user', JSON.stringify(user));
-      localStorage.setItem('activeWorkspace', user.activeWorkspace);
+      localStorage.setItem('user', JSON.stringify({ ...user, activeWorkspace: workspaceId }));
+      if (workspaceId) localStorage.setItem('activeWorkspace', String(workspaceId));
 
       set({
-        user,
+        user: { ...user, activeWorkspace: workspaceId },
         token: accessToken,
         isAuthenticated: true,
         isLoading: false,
@@ -48,14 +49,15 @@ export const useAuthStore = create((set) => ({
     try {
       const response = await authApi.register(data);
       const { user, accessToken, refreshToken } = response.data;
+      const workspaceId = user.activeWorkspace?._id ?? user.activeWorkspace;
 
       localStorage.setItem('token', accessToken);
       if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
-      localStorage.setItem('user', JSON.stringify(user));
-      localStorage.setItem('activeWorkspace', user.activeWorkspace);
+      localStorage.setItem('user', JSON.stringify({ ...user, activeWorkspace: workspaceId }));
+      if (workspaceId) localStorage.setItem('activeWorkspace', String(workspaceId));
 
       set({
-        user,
+        user: { ...user, activeWorkspace: workspaceId },
         token: accessToken,
         isAuthenticated: true,
         isLoading: false,

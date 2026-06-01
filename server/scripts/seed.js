@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 
 import User from '../src/models/User.js';
 import Workspace from '../src/models/Workspace.js';
+import WorkspaceMember from '../src/models/WorkspaceMember.js';
 import Job from '../src/models/Job.js';
 import Execution from '../src/models/Execution.js';
 
@@ -34,11 +35,16 @@ const seed = async () => {
     // 2. Create Workspace
     const workspace = new Workspace({
       name: 'Demo Workspace',
-      slug: 'demo-workspace',
+      slug: `demo-workspace-${Date.now()}`,
       owner: user._id,
-      members: [{ user: user._id, role: 'owner' }]
     });
     await workspace.save();
+
+    await WorkspaceMember.create({
+      workspace: workspace._id,
+      user: user._id,
+      role: 'owner',
+    });
 
     user.activeWorkspace = workspace._id;
     await user.save();
